@@ -7,19 +7,25 @@ no build step, package manager, test suite, lint, or CI. Run it by opening
 `NetDraw.html` directly in a modern browser (`xdg-open NetDraw.html`).
 
 ## File map (NetDraw.html)
-- ~1–495: markup + CSS (theme variables at top; `body.light` overrides).
-- ~496–8476: constants/data. `ICONS` (~528), `EFFECTS` (~658), `FIELD_DEFS` (~698),
-  `TYPES` (~745), then the huge `AWS_SERVICE_ITEMS` (~878), `GCP_SERVICE_ITEMS` (~1188),
-  `AZURE_SERVICE_ITEMS` (~3443) icon arrays that make up most of the file, and
-  `PALETTE_GROUPS` (~8440).
-- ~8477–11182: logic — state/history/persistence, rendering, interaction, properties
-  panel, export (PNG/SVG/GIF/video), and `boot()` at the end.
+- ~1–546: markup + CSS (theme variables at top; `body.light` overrides).
+- ~547–8490: constants/data. `ICONS` (~580), `EFFECTS` (~710), `FIELD_DEFS` (~750),
+  `TYPES` (~797), then the huge `AWS_SERVICE_ITEMS` (~930), `GCP_SERVICE_ITEMS` (~1240),
+  `AZURE_SERVICE_ITEMS` (~3490) icon arrays that make up most of the file, and
+  `PALETTE_GROUPS` (~8492).
+- ~8490–11915: logic — state/history/persistence, rendering, interaction, properties
+  panel, filters/layers, export (PNG/SVG/GIF/video), and `boot()` at the end.
 - Do not read the whole file or grep broad terms; the embedded SVG strings flood results.
   Use targeted line ranges and anchored keywords.
 
 ## State model
-- A document is `{version: DOC_VERSION(2), activePageId, pages:[{id,name,state,view}]}`,
-  where `state = {nodes, edges, zones, journey:{steps:[]}}` and `view = {x,y,k}`.
+- A document is `{version: DOC_VERSION(2), activePageId, filters:[{id,name,color}],
+  pages:[{id,name,state,view}]}`, where `state = {nodes, edges, zones, journey:{steps:[]}}`
+  and `view = {x,y,k}`.
+- `filters` are document-wide named layers. Any node/edge/zone/s swimlane may carry
+  `tags:[filterId,...]`. `activeFilters` (a `Set`) is transient UI state, not serialized;
+  when non-empty, non-matching objects are dimmed via `elemState`/`dimGroup` (edges also
+  match when both endpoints match). Keep `filters`/`tags` backward compatible through
+  `normalizeFilters` / `normalizeTags` / `pruneTags`.
 - `state` / `view` are live references to the active page. `persistCurrentPage()` copies
   them back before serialization; `setActivePage()` reassigns them. Persist before
   switching or adding pages.

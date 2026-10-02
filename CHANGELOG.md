@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.1.11 - 2026-10-02
+
+- Updated the displayed NetDraw version to `v1.1.11`.
+- Added filters/layers: create document-wide named, colored filters in a new Filters panel, then tag any node, connection, zone, or swimlane from its properties panel (single or multi-selection).
+- Toggling one or more filters dims every object that does not match; connections stay visible when tagged or when both endpoints match.
+- SVG/PNG/GIF exports prompt to render the full diagram or exactly what is on screen while filters are active.
+
 ## v1.1.10 - 2026-10-02
 
 - Updated the displayed NetDraw version to `v1.1.10`.

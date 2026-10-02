@@ -1,6 +1,6 @@
 # NetDraw
 
-Current version: `v1.1.10`
+Current version: `v1.1.11`
 
 NetDraw is a self-contained browser-based network diagram editor. The app lives in `NetDraw.html` and runs locally without a build step or server.
 

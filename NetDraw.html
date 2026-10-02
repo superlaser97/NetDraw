@@ -227,6 +227,35 @@
   #jAdd:hover{background:var(--button-hover);}
   #jPlay.jprimary{height:36px; padding:0 18px; background:#123047; color:#7dd3fc; border:1px solid #1e4f6e; font-weight:600;}
   #jPlay.jprimary:hover{background:#163a56;}
+
+  /* ---------- filters / layers ---------- */
+  #filters{
+    position:absolute; inset:0; z-index:140; display:none;
+    align-items:center; justify-content:center;
+    background:rgba(4,8,16,.72); backdrop-filter:blur(4px);
+  }
+  #fClose{width:32px; height:32px; padding:0; background:var(--panel2); border:1px solid var(--border); color:var(--muted);}
+  #fClose:hover{background:var(--button-hover); color:var(--text);}
+  .fnew{display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
+  .fnew input[type=text]{flex:1; min-width:150px; background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; outline:none;}
+  .fnew input[type=text]:focus{border-color:#2f6fa8;}
+  .fnew button{height:36px; padding:0 15px; background:#123047; color:#7dd3fc; border:1px solid #1e4f6e; font-weight:600;}
+  .fnew button:hover{background:#163a56;}
+  .fcolors{display:flex; gap:5px; flex-wrap:wrap; max-width:210px;}
+  .fcolors .sw{width:20px; height:20px;}
+  .flist{display:flex; flex-direction:column; gap:8px;}
+  .frow{display:flex; align-items:center; gap:9px; background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:9px 11px;}
+  .frow.off{opacity:.6;}
+  .fdot{flex:0 0 14px; width:14px; height:14px; border-radius:5px; cursor:pointer;}
+  .frow input[type=text]{flex:1; min-width:0; background:var(--panel); border:1px solid var(--border); color:var(--text); border-radius:7px; padding:6px 9px; font-size:12.5px; font-family:inherit; outline:none;}
+  .frow input[type=text]:focus{border-color:#2f6fa8;}
+  .ftoggle{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted); cursor:pointer; white-space:nowrap;}
+  .frow .fdanger{height:28px; min-width:28px; padding:0 9px; background:var(--panel); border:1px solid #58202f; color:#fda4af;}
+  .frow .fdanger:hover{background:#4c1b2b;}
+  .fcount{font-size:12px; color:var(--faint);}
+  .filtbadge{display:inline-flex; align-items:center; justify-content:center; min-width:16px; height:16px; padding:0 4px; margin-left:5px; border-radius:99px; background:#123047; color:#7dd3fc; font-size:10px; font-weight:700;}
+  .tagtip{font-size:11px; color:var(--faint); font-style:italic;}
+
   #pickBar{
     position:absolute; bottom:52px; left:50%; transform:translateX(-50%); z-index:135; display:none;
     align-items:center; gap:12px; max-width:min(720px,94%);
@@ -238,7 +267,7 @@
   #pickBar button{height:32px; padding:0 14px; font-weight:600; border:1px solid var(--border); background:var(--panel2); color:var(--text);}
   #pickUse{background:#123047; color:#7dd3fc; border-color:#1e4f6e;}
   #pickBar button:hover{filter:brightness(1.15);}
-  body.presenting #palette, body.presenting #topbar .tgroup, body.presenting #hintbar, body.presenting #journey, body.presenting #pagebar{display:none !important;}
+  body.presenting #palette, body.presenting #topbar .tgroup, body.presenting #hintbar, body.presenting #journey, body.presenting #filters, body.presenting #pagebar{display:none !important;}
   body.presenting #topbar{justify-content:center;}
   body.presenting #logo{margin:0;}
   #presentBar{
@@ -296,12 +325,12 @@
   }
 
   /* ---------- record modal ---------- */
-  #recModal{
+  #recModal, #filterExportModal{
     position:absolute; inset:0; z-index:150; display:none;
     align-items:center; justify-content:center;
     background:rgba(4,8,16,.55); backdrop-filter:blur(3px);
   }
-  #recModal.open{display:flex;}
+  #recModal.open, #filterExportModal.open{display:flex;}
   .mbox{
     width:330px; background:var(--panel); border:1px solid var(--border2);
     border-radius:16px; padding:20px; box-shadow:0 24px 80px rgba(0,0,0,.6);
@@ -329,7 +358,7 @@
         <circle cx="5" cy="6" r="2.6"/><circle cx="19" cy="6" r="2.6"/><circle cx="12" cy="18" r="2.6"/>
         <path d="M7 7.5 10.5 16M17 7.5 13.5 16M7.6 6h8.8"/>
       </svg>
-      NetDraw <span class="sub">v1.1.10</span>
+      NetDraw <span class="sub">v1.1.11</span>
     </div>
 
     <div class="tgroup">
@@ -406,6 +435,12 @@
       </button>
     </div>
     <div class="tgroup">
+      <button id="btnFilters" class="btn-text" title="Filters / layers">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16l-6.2 7.3V19l-3.6-1.8v-4.9z"/></svg>
+        Filters<span id="filterBadge" class="filtbadge" style="display:none">0</span>
+      </button>
+    </div>
+    <div class="tgroup">
       <button id="btnRec" class="btn-text" title="Record the diagram as video, with optional mic narration or music">
         <svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5" fill="#ef4444"/></svg>
         <span>Rec</span>
@@ -449,6 +484,7 @@
 
       <div id="props"></div>
       <div id="journey"></div>
+      <div id="filters"></div>
       <div id="presentBar">
         <button id="pjExit" title="Exit (Esc)">✕</button>
         <button id="pjPrev" title="Previous">‹ Prev</button>
@@ -479,6 +515,19 @@
           <div class="mbtns">
             <button id="recStart">● Start recording</button>
             <button id="recCancel">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div id="filterExportModal">
+        <div class="mbox">
+          <h3>Active filters</h3>
+          <p class="mnote">Some objects are dimmed by the active filters. Choose how this export should be rendered.</p>
+          <div class="mbtns">
+            <button id="fxFull">Full diagram</button>
+            <button id="fxShown">As shown</button>
+          </div>
+          <div class="mbtns">
+            <button id="fxCancel">Cancel</button>
           </div>
         </div>
       </div>
@@ -8465,6 +8514,9 @@ let state = {nodes:[], edges:[], zones:[], journey:{steps:[]}};
 let view = {x:0, y:0, k:1};
 let pages = [];
 let activePageId = null;
+let filters = [];                 // document-wide filter/layer definitions {id,name,color}
+let activeFilters = new Set();    // transient ids of enabled filters
+let filtersOpen = false;
 let tool = "select";
 let selection = new Set();        // node, edge, and zone ids
 let diagramClipboard = null;
@@ -8525,6 +8577,36 @@ function cleanPageName(v, fallback){
 const PORT_SIDES = ["top", "right", "bottom", "left"];
 function cleanPort(v){ return PORT_SIDES.includes(v) ? v : ""; }
 function normalizeIdList(v){ return Array.isArray(v) ? v.filter(x => typeof x === "string") : []; }
+/* ---------- filters / layers ---------- */
+const FILTER_COLORS = ["#38bdf8","#60a5fa","#a78bfa","#c084fc","#f472b6","#f87171","#fb923c","#fbbf24","#34d399","#2dd4bf","#94a3b8"];
+function filterById(id){ return filters.find(f => f.id === id); }
+function filterColor(id){ const f = filterById(id); return f ? f.color : "#64748b"; }
+function objTags(o){ return o && Array.isArray(o.tags) ? o.tags : []; }
+function normalizeTags(v){ return Array.isArray(v) ? v.filter(x => typeof x === "string" && x.trim()) : []; }
+function normalizeFilters(v){
+  const seen = new Set();
+  return (Array.isArray(v) ? v : []).map(f => {
+    if(!f || typeof f !== "object") return null;
+    const id = cleanId(f.id, "fl");
+    if(seen.has(id)) return null;
+    seen.add(id);
+    const name = typeof f.name === "string" ? f.name.trim().slice(0, 40) : "";
+    return {id, name: name || "Filter", color: typeof f.color === "string" && /^#[0-9a-f]{3,8}$/i.test(f.color) ? f.color : FILTER_COLORS[0]};
+  }).filter(Boolean);
+}
+/* drop tag ids that reference filters no longer defined (document-wide) */
+function pruneTags(){
+  const ids = new Set(filters.map(f => f.id));
+  const clean = o => {
+    if(Array.isArray(o.tags)){
+      const t = o.tags.filter(x => ids.has(x));
+      if(t.length) o.tags = t; else delete o.tags;
+    }
+  };
+  const visit = st => { if(!st) return; (st.nodes || []).forEach(clean); (st.edges || []).forEach(clean); (st.zones || []).forEach(clean); };
+  visit(state);
+  pages.forEach(p => { if(p.state !== state) visit(p.state); });
+}
 function normalizeJourney(v){
   const steps = v && Array.isArray(v.steps) ? v.steps : [];
   return {
@@ -8548,6 +8630,8 @@ function normalizeState(doc){
     const out = {...n, id, x:n.x, y:n.y, label: typeof n.label === "string" && n.label.trim() ? n.label : (T.defaultLabel || T.name)};
     if(finiteNum(n.w)) out.w = Math.max(1, n.w);
     if(finiteNum(n.h)) out.h = Math.max(1, n.h);
+    const tags = normalizeTags(n.tags);
+    if(tags.length) out.tags = tags; else delete out.tags;
     return out;
   });
   const nodeIds = new Set(nodes.map(n => n.id));
@@ -8565,6 +8649,8 @@ function normalizeState(doc){
       w: Math.max(1, z.w),
       h: Math.max(1, z.h)
     };
+    const ztags = normalizeTags(z.tags);
+    if(ztags.length) out.tags = ztags; else delete out.tags;
     if(out.kind === "swimlane"){
       const lanes = Array.isArray(z.lanes) ? z.lanes.map(x => String(x).trim()).filter(Boolean) : [];
       out.orient = z.orient === "v" ? "v" : "h";
@@ -8581,6 +8667,7 @@ function normalizeState(doc){
     if(endpointIds.has(id) || edgeIds.has(id)) throw new Error("duplicate element id");
     edgeIds.add(id);
     const bend = e.bend && finiteNum(e.bend.x) && finiteNum(e.bend.y) ? {x:e.bend.x, y:e.bend.y} : undefined;
+    const etags = normalizeTags(e.tags);
     return {
       ...e,
       id,
@@ -8591,7 +8678,8 @@ function normalizeState(doc){
       toPort: cleanPort(e.toPort),
       bend,
       anim: !!e.anim,
-      arrows: ["none","start","end","both"].includes(e.arrows) ? e.arrows : "none"
+      arrows: ["none","start","end","both"].includes(e.arrows) ? e.arrows : "none",
+      ...(etags.length ? {tags:etags} : {})
     };
   });
   return {nodes, edges, zones, journey:normalizeJourney(doc.journey)};
@@ -8620,10 +8708,10 @@ function normalizeFileDoc(doc){
     });
     if(!out.length) throw new Error("empty document");
     const active = out.some(p => p.id === doc.activePageId) ? doc.activePageId : out[0].id;
-    return {version:DOC_VERSION, pages:out, activePageId:active};
+    return {version:DOC_VERSION, pages:out, activePageId:active, filters:normalizeFilters(doc.filters)};
   }
   const p = makePage("Page 1", normalizeState(doc), blankView());
-  return {version:DOC_VERSION, pages:[p], activePageId:p.id};
+  return {version:DOC_VERSION, pages:[p], activePageId:p.id, filters:normalizeFilters(doc && doc.filters)};
 }
 function activePage(){ return pages.find(p => p.id === activePageId) || pages[0] || null; }
 function persistCurrentPage(){
@@ -8637,6 +8725,7 @@ function serializeDoc(){
   return {
     version:DOC_VERSION,
     activePageId,
+    filters:filters.map(f => ({id:f.id, name:f.name, color:f.color})),
     pages:pages.map(p => ({
       id:p.id,
       name:p.name,
@@ -8699,6 +8788,7 @@ function resetDocument(){
     $("journey").style.display = "none";
     $("btnJourney").classList.remove("active");
   }
+  if(filtersOpen) toggleFilters();
   if(picking){
     picking = null;
     $("pickBar").style.display = "none";
@@ -8707,6 +8797,9 @@ function resetDocument(){
   activePageId = pages[0].id;
   state = pages[0].state;
   view = pages[0].view;
+  filters = [];
+  activeFilters.clear();
+  updateFilterBadge();
   selection.clear();
   diagramClipboard = null;
   pasteCount = 0;
@@ -9420,11 +9513,28 @@ function renderAll(){
   ensureSneak();
 }
 
+/* filter/layer matching: an object matches if it carries an active tag; an edge also
+   matches when both of its endpoints match. No active filters => everything shows. */
+function hasActiveTag(o){ return objTags(o).some(id => activeFilters.has(id)); }
+function endpointFilterMatch(id){
+  if(!activeFilters.size) return true;
+  const o = nodeById(id) || zoneById(id);
+  return !!(o && hasActiveTag(o));
+}
+function filterShows(id, obj){
+  if(!activeFilters.size) return true;
+  if(!obj) return true;
+  if(edgeById(id)) return hasActiveTag(obj) || (endpointFilterMatch(obj.a) && endpointFilterMatch(obj.b));
+  return hasActiveTag(obj);
+}
 let present = null, pjHidden = new Set(), pjOn = new Set(), pjHasHL = false;
 function elemState(id){
-  if(!present) return "on";
-  if(pjHidden.has(id)) return "hidden";
-  return pjOn.has(id) ? "on" : (pjHasHL ? "dim" : "on");
+  if(present){
+    if(pjHidden.has(id)) return "hidden";
+    return pjOn.has(id) ? "on" : (pjHasHL ? "dim" : "on");
+  }
+  if(activeFilters.size && !filterShows(id, nodeById(id) || edgeById(id) || zoneById(id))) return "dim";
+  return "on";
 }
 function dimGroup(g){
   g.setAttribute("opacity", ".13");
@@ -9538,6 +9648,7 @@ function jLabelOf(id){
 function toggleJourney(){
   if(picking) endPick(false);
   journeyOpen = !journeyOpen;
+  if(journeyOpen && filtersOpen) closeFilters();
   $("journey").style.display = journeyOpen ? "flex" : "none";
   $("btnJourney").classList.toggle("active", journeyOpen);
   if(journeyOpen){
@@ -9627,6 +9738,119 @@ function endPick(apply){
   $("journey").style.display = "flex";
   renderAll();
   buildJourneyModal();
+}
+
+/* ---------- filters / layers ---------- */
+function closeFilters(){
+  if(!filtersOpen) return;
+  filtersOpen = false;
+  $("filters").style.display = "none";
+  $("btnFilters").classList.remove("active");
+  renderAll();
+}
+function toggleFilters(){
+  if(present) return;
+  if(picking) endPick(false);
+  filtersOpen = !filtersOpen;
+  if(filtersOpen && journeyOpen) toggleJourney();
+  $("filters").style.display = filtersOpen ? "flex" : "none";
+  $("btnFilters").classList.toggle("active", filtersOpen);
+  if(filtersOpen){
+    propsEl.style.display = "none";
+    buildFiltersModal();
+  } else {
+    renderAll();
+  }
+}
+function updateFilterBadge(){
+  const b = $("filterBadge");
+  if(!b) return;
+  if(activeFilters.size){ b.style.display = ""; b.textContent = activeFilters.size; }
+  else b.style.display = "none";
+}
+function buildFiltersModal(){
+  const rows = filters.map(f => {
+    const on = activeFilters.has(f.id);
+    return `<div class="frow ${on ? "" : "off"}" data-fid="${f.id}">
+      <span class="fdot" data-fcolor="${f.id}" style="background:${esc(f.color)}" title="Click to cycle color"></span>
+      <input type="text" class="fname" data-fid="${f.id}" value="${esc(f.name)}" maxlength="40">
+      <label class="ftoggle"><input type="checkbox" class="factive" data-fid="${f.id}" ${on ? "checked" : ""}> Show</label>
+      <button class="fdanger" data-fdel="${f.id}" title="Delete filter">✕</button>
+    </div>`;
+  }).join("");
+  $("filters").innerHTML = `<div class="jm-box">
+    <div class="jm-head"><h3>Filters / layers</h3><button id="fClose" title="Close">✕</button></div>
+    <div class="jm-body">
+      <p class="jm-hint">Create named filters, then tag any object from its properties panel. Enable one or more filters to dim every object that does not match. Connections stay lit when tagged or when both endpoints match.</p>
+      <div class="fnew">
+        <input type="text" id="fName" placeholder="New filter name…" maxlength="40">
+        <div class="fcolors">${FILTER_COLORS.map(c => `<div class="sw" data-newcolor="${c}" style="background:${c}"></div>`).join("")}</div>
+        <button id="fAdd">+ Add</button>
+      </div>
+      <div class="flist">${rows || '<p class="jempty">No filters yet. Add one above.</p>'}</div>
+    </div>
+    <div class="jm-foot">
+      <div class="jm-foot-r">
+        <span class="fcount">${activeFilters.size} active · ${filters.length} total</span>
+        <button id="fClear" class="jprimary">Clear active</button>
+      </div>
+    </div>
+  </div>`;
+  let newColor = FILTER_COLORS[0];
+  const colorEls = $("filters").querySelectorAll("[data-newcolor]");
+  const syncNewColor = () => colorEls.forEach(c => c.classList.toggle("on", c.dataset.newcolor === newColor));
+  syncNewColor();
+  colorEls.forEach(c => c.addEventListener("click", () => { newColor = c.dataset.newcolor; syncNewColor(); }));
+  const add = () => {
+    const inp = $("fName"), name = inp.value.trim();
+    if(!name){ inp.focus(); return; }
+    addFilter(name, newColor);
+  };
+  $("fAdd").onclick = add;
+  $("fName").addEventListener("keydown", e => { e.stopPropagation(); if(e.key === "Enter") add(); });
+  $("fClose").onclick = toggleFilters;
+  $("fClear").onclick = () => { activeFilters.clear(); updateFilterBadge(); renderAll(); buildFiltersModal(); };
+  $("filters").querySelectorAll(".fname").forEach(inp => {
+    inp.addEventListener("change", () => renameFilter(inp.dataset.fid, inp.value));
+    inp.addEventListener("keydown", e => { e.stopPropagation(); if(e.key === "Enter") e.target.blur(); });
+  });
+  $("filters").querySelectorAll(".factive").forEach(cb => cb.addEventListener("change", () => toggleFilterActive(cb.dataset.fid, cb.checked)));
+  $("filters").querySelectorAll(".fdot").forEach(dot => dot.addEventListener("click", () => cycleFilterColor(dot.dataset.fcolor)));
+  $("filters").querySelectorAll(".fdanger").forEach(b => b.addEventListener("click", () => deleteFilter(b.dataset.fdel)));
+}
+function addFilter(name, color){
+  filters.push({id:uid("fl"), name:String(name).trim().slice(0, 40), color:color || FILTER_COLORS[0]});
+  saveSoon(); renderAll(); buildFiltersModal();
+}
+function renameFilter(id, name){
+  const f = filterById(id); if(!f) return;
+  const n = String(name || "").trim().slice(0, 40);
+  if(!n || n === f.name){ buildFiltersModal(); return; }
+  f.name = n; saveSoon(); renderAll(); buildFiltersModal();
+}
+function cycleFilterColor(id){
+  const f = filterById(id); if(!f) return;
+  const i = Math.max(0, FILTER_COLORS.indexOf(f.color));
+  f.color = FILTER_COLORS[(i + 1) % FILTER_COLORS.length];
+  saveSoon(); renderAll(); buildFiltersModal();
+}
+function toggleFilterActive(id, on){
+  if(on) activeFilters.add(id); else activeFilters.delete(id);
+  updateFilterBadge(); renderAll();
+  const row = $("filters").querySelector(`.frow[data-fid="${id}"]`);
+  if(row) row.classList.toggle("off", !on);
+  const count = $("filters").querySelector(".fcount");
+  if(count) count.textContent = `${activeFilters.size} active · ${filters.length} total`;
+}
+function deleteFilter(id){
+  const f = filterById(id); if(!f) return;
+  if(!confirm(`Delete filter "${f.name}"? Objects tagged with it will be untagged.`)) return;
+  filters = filters.filter(x => x.id !== id);
+  activeFilters.delete(id);
+  const strip = o => { if(Array.isArray(o.tags)){ o.tags = o.tags.filter(t => t !== id); if(!o.tags.length) delete o.tags; } };
+  const visit = st => { if(!st) return; (st.nodes || []).forEach(strip); (st.edges || []).forEach(strip); (st.zones || []).forEach(strip); };
+  visit(state); pages.forEach(p => { if(p.state !== state) visit(p.state); });
+  saveSoon(); updateFilterBadge(); renderAll(); buildFiltersModal();
 }
 
 /* ---------- history / persistence ---------- */
@@ -10449,6 +10673,32 @@ function commonValue(objs, get){
   const first = get(objs[0]);
   return objs.every(o => get(o) === first) ? first : MIXED;
 }
+/* filter/layer tag chips for the properties panel (single or multi target) */
+function filterChipsHTML(objs){
+  if(!filters.length)
+    return `<div class="row"><label>Filters / layers</label><span class="tagtip">No filters yet — create them in the Filters panel.</span></div>`;
+  return `<div class="row"><label>Filters / layers</label><div class="fxchips">${
+    filters.map(f => {
+      const all = objs.every(o => objTags(o).includes(f.id));
+      const any = objs.some(o => objTags(o).includes(f.id));
+      const style = all ? `border-color:${f.color};color:${f.color};background:${f.color}1c` : "";
+      return `<div class="fxchip tagchip ${any && !all ? "partial" : ""}" data-tag="${f.id}" style="${style}">${esc(f.name)}</div>`;
+    }).join("")
+  }</div></div>`;
+}
+function wireTagChips(objs){
+  propsEl.querySelectorAll(".tagchip").forEach(ch => ch.addEventListener("click", () => {
+    const id = ch.dataset.tag;
+    const all = objs.every(o => objTags(o).includes(id));
+    for(const o of objs){
+      const cur = objTags(o);
+      if(all) o.tags = cur.filter(x => x !== id);
+      else if(!cur.includes(id)) o.tags = [...cur, id];
+      if(Array.isArray(o.tags) && !o.tags.length) delete o.tags;
+    }
+    commit(); renderAll();
+  }));
+}
 function updateMultiProps(){
   const targets = selectionTargets();
   if(targets.length < 2){ propsEl.style.display = "none"; return; }
@@ -10614,6 +10864,7 @@ function updateMultiProps(){
     ${nodeHTML}
     ${edgeHTML}
     ${zoneHTML}
+    ${filterChipsHTML(targets.map(t => t.obj))}
     ${colorHTML}
     ${orderControls()}
     <button class="danger" id="pDelete">Delete ${targets.length} objects</button>`;
@@ -10647,7 +10898,7 @@ function updateMultiProps(){
       for(const n of nodes){ if(all) delete n.disp; else n.disp = k; }
       commit(); renderAll();
     }));
-    propsEl.querySelectorAll(".fxchip:not(.dispchip)").forEach(ch => ch.addEventListener("click", () => {
+    propsEl.querySelectorAll(".fxchip:not(.dispchip):not(.tagchip)").forEach(ch => ch.addEventListener("click", () => {
       const k = ch.dataset.fx;
       const all = nodes.every(n => nodeEffects(n).includes(k));
       for(const n of nodes){
@@ -10671,12 +10922,13 @@ function updateMultiProps(){
 
   if(allSwim) wireMultiSelect("#pOrient", v => { for(const z of zones) z.orient = v === "v" ? "v" : "h"; });
 
+  wireTagChips(targets.map(t => t.obj));
   wireOrderControls();
   propsEl.querySelector("#pDelete").addEventListener("click", deleteSelection);
   propsEl.style.display = "block";
 }
 function updateProps(){
-  if(journeyOpen || present){ propsEl.style.display = "none"; return; }
+  if(journeyOpen || filtersOpen || present){ propsEl.style.display = "none"; return; }
   if(selection.size === 0){ propsEl.style.display = "none"; return; }
   if(selection.size > 1){ updateMultiProps(); return; }
   const id = [...selection][0];
@@ -10728,6 +10980,7 @@ function updateProps(){
       <h4>${esc(T.name)}</h4>
       <div class="row"><label>${esc(T.labelCaption || "Label")}</label><textarea id="pLabel" rows="2">${esc(n.label)}</textarea></div>
       ${fieldRows}
+      ${filterChipsHTML([n])}
       <div class="row"><label>Disposition</label><div class="fxchips">${
         Object.entries(DISPOSITIONS).map(([k, dd]) =>
           `<div class="fxchip dispchip" data-disp="${k}" style="${n.disp === k ? `border-color:${dd.color};color:${dd.color};background:${dd.color}1c` : ""}">${dd.name}</div>`
@@ -10752,13 +11005,14 @@ function updateProps(){
       if(n.disp === k) delete n.disp; else n.disp = k;
       commit(); renderAll();
     }));
-    propsEl.querySelectorAll(".fxchip:not(.dispchip)").forEach(ch => ch.addEventListener("click", () => {
+    propsEl.querySelectorAll(".fxchip:not(.dispchip):not(.tagchip)").forEach(ch => ch.addEventListener("click", () => {
       const k = ch.dataset.fx;
       const cur = nodeEffects(n);
       n.effects = cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k];
       commit(); renderAll();
     }));
     propsEl.querySelectorAll(".sw").forEach(sw => sw.addEventListener("click", () => { n.accent = sw.dataset.c; commit(); renderAll(); }));
+    wireTagChips([n]);
     wireOrderControls();
     propsEl.querySelector("#pDelete").addEventListener("click", deleteSelection);
   } else if(z && z.kind === "swimlane"){
@@ -10778,6 +11032,7 @@ function updateProps(){
       <div class="row"><label>Color</label><div class="swatches">${
         SWATCHES.map(c => `<div class="sw ${z.color === c ? "on" : ""}" data-c="${c}" style="background:${c}"></div>`).join("")
       }</div></div>
+      ${filterChipsHTML([z])}
       ${orderControls()}
       <button class="danger" id="pDelete">Delete swimlane (keeps contents)</button>`;
     wireText("#pLabel", v => { if(v) z.label = v; });
@@ -10796,6 +11051,7 @@ function updateProps(){
       commit(); renderAll();
     });
     propsEl.querySelectorAll(".sw").forEach(sw => sw.addEventListener("click", () => { z.color = sw.dataset.c; commit(); renderAll(); }));
+    wireTagChips([z]);
     wireOrderControls();
     propsEl.querySelector("#pDelete").addEventListener("click", deleteSelection);
   } else if(z){
@@ -10805,10 +11061,12 @@ function updateProps(){
       <div class="row"><label>Color</label><div class="swatches">${
         SWATCHES.map(c => `<div class="sw ${z.color === c ? "on" : ""}" data-c="${c}" style="background:${c}"></div>`).join("")
       }</div></div>
+      ${filterChipsHTML([z])}
       ${orderControls()}
       <button class="danger" id="pDelete">Delete zone (keeps contents)</button>`;
     wireText("#pLabel", v => { if(v) z.label = v; });
     propsEl.querySelectorAll(".sw").forEach(sw => sw.addEventListener("click", () => { z.color = sw.dataset.c; commit(); renderAll(); }));
+    wireTagChips([z]);
     wireOrderControls();
     propsEl.querySelector("#pDelete").addEventListener("click", deleteSelection);
   } else if(ed){
@@ -10852,6 +11110,7 @@ function updateProps(){
           <option value="both" ${ed.arrows === "both" ? "selected" : ""}>Two-way ↔</option>
         </select></div>
       <div class="row"><label class="checkrow"><input type="checkbox" id="pAnim" ${ed.anim ? "checked" : ""}> Animated traffic flow</label></div>
+      ${filterChipsHTML([ed])}
       ${orderControls()}
       <button class="danger" id="pDelete">Delete connection</button>`;
     propsEl.querySelector("#pLabel").addEventListener("change", e => { ed.label = e.target.value.trim(); commit(); renderAll(); });
@@ -10862,6 +11121,7 @@ function updateProps(){
     propsEl.querySelector("#pToPort").addEventListener("change", e => { ed.toPort = cleanPort(e.target.value); commit(); renderAll(); });
     propsEl.querySelector("#pArrows").addEventListener("change", e => { ed.arrows = e.target.value; commit(); renderAll(); });
     propsEl.querySelector("#pAnim").addEventListener("change", e => { ed.anim = e.target.checked; commit(); renderAll(); });
+    wireTagChips([ed]);
     wireOrderControls();
     propsEl.querySelector("#pDelete").addEventListener("click", deleteSelection);
   } else { propsEl.style.display = "none"; return; }
@@ -10884,6 +11144,7 @@ window.addEventListener("keydown", e => {
     return;
   }
   if(journeyOpen && e.key === "Escape"){ toggleJourney(); e.preventDefault(); return; }
+  if(filtersOpen && e.key === "Escape"){ toggleFilters(); e.preventDefault(); return; }
   if(e.code === "Space"){ spaceDown = true; if(!drag) svg.classList.add("panning"); e.preventDefault(); return; }
   const mod = e.ctrlKey || e.metaKey;
   if(mod && e.key.toLowerCase() === "z" && !e.shiftKey){ undo(); e.preventDefault(); }
@@ -11421,6 +11682,11 @@ function importJSON(file){
       activePageId = nextDoc.activePageId || pages[0].id;
       state = activePage().state;
       view = normalizeView(activePage().view);
+      filters = nextDoc.filters || [];
+      pruneTags();
+      activeFilters.clear();
+      updateFilterBadge();
+      if(filtersOpen) buildFiltersModal();
       selection.clear();
       undoStack = []; redoStack = [];
       lastSnap = serialize();
@@ -11433,6 +11699,31 @@ function importJSON(file){
   };
   rd.readAsText(file);
 }
+
+/* ---------- export filter prompt ---------- */
+let pendingExport = null;
+function requestExport(run){
+  if(!activeFilters.size){ run(); return; }
+  pendingExport = run;
+  $("filterExportModal").classList.add("open");
+}
+async function resolveExport(full){
+  const run = pendingExport; pendingExport = null;
+  $("filterExportModal").classList.remove("open");
+  if(!run) return;
+  if(full){
+    const saved = activeFilters;
+    activeFilters = new Set();
+    updateFilterBadge();
+    try{ await run(); }
+    finally{ activeFilters = saved; updateFilterBadge(); renderAll(); }
+  } else {
+    await run();
+  }
+}
+$("fxFull").onclick = () => resolveExport(true);
+$("fxShown").onclick = () => resolveExport(false);
+$("fxCancel").onclick = () => { pendingExport = null; $("filterExportModal").classList.remove("open"); };
 
 /* ---------- toolbar wiring ---------- */
 $("toolSelect").onclick = () => setTool("select");
@@ -11449,10 +11740,11 @@ $("btnFit").onclick = zoomFit;
 $("btnGrid").onclick = () => { gridOn = !gridOn; gridRect.style.display = gridOn ? "" : "none"; $("btnGrid").classList.toggle("active", gridOn); };
 $("btnSnap").onclick = () => { snapOn = !snapOn; $("btnSnap").classList.toggle("active", snapOn); };
 $("btnTheme").onclick = () => applyTheme(theme === "light" ? "dark" : "light");
-$("btnPNG").onclick = exportPNG;
-$("btnSVG").onclick = exportSVG;
-$("btnGIF").onclick = exportGIF;
+$("btnPNG").onclick = () => requestExport(() => exportPNG());
+$("btnSVG").onclick = () => requestExport(() => exportSVG());
+$("btnGIF").onclick = () => requestExport(() => exportGIF());
 $("btnJourney").onclick = toggleJourney;
+$("btnFilters").onclick = toggleFilters;
 $("pickUse").onclick = () => endPick(true);
 $("pickCancel").onclick = () => endPick(false);
 $("pjExit").onclick = exitPresent;
@@ -11550,7 +11842,7 @@ function boot(){
       let nextDoc;
       if(doc.state && Array.isArray(doc.state.nodes)){
         const p = makePage("Page 1", normalizeState(doc.state), normalizeView(doc.view));
-        nextDoc = {pages:[p], activePageId:p.id};
+        nextDoc = {pages:[p], activePageId:p.id, filters:normalizeFilters(doc.filters)};
       } else {
         nextDoc = normalizeFileDoc(doc);
       }
@@ -11558,12 +11850,16 @@ function boot(){
       activePageId = nextDoc.activePageId || pages[0].id;
       state = activePage().state;
       view = normalizeView(activePage().view);
+      filters = nextDoc.filters || [];
+      pruneTags();
+      activeFilters.clear();
     }
   }catch(_){
     pages = [makePage("Page 1", blankState(), blankView())];
     activePageId = pages[0].id;
     state = pages[0].state;
     view = pages[0].view;
+    filters = [];
   }
   selection.clear();
   undoStack = []; redoStack = [];
