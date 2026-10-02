@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1.10 - 2026-10-02
+
+- Updated the displayed NetDraw version to `v1.1.10`.
+- Added multi-object properties editing: select two or more nodes, connections, zones, or swimlanes to edit labels, shared fields, disposition, effects, colors, and connection settings together, with mixed-value indicators.
+- Added automatic label wrapping with manual line breaks; the in-canvas label editor is now a multiline textarea (Enter commits, Shift+Enter adds a line).
+- Object, connection, zone, and swimlane sizing now measures wrapped text so cards, label tags, and swimlane title bands grow to fit.
+- Dragging a zone now also moves any zones nested inside it, recursively, along with their member objects.
+- The properties panel now scrolls when its content overflows the viewport.
+
 ## v1.1.9 - 2026-08-16
 
 - Updated the displayed NetDraw version to `v1.1.9`.

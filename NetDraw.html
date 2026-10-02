@@ -154,6 +154,7 @@
     background:var(--props-bg); backdrop-filter:blur(8px);
     border:1px solid var(--border); border-radius:14px; padding:14px;
     box-shadow:0 14px 40px rgba(0,0,0,.45);
+    max-height:calc(100% - 28px); overflow:auto;
   }
   #props h4{font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--faint); margin-bottom:10px; font-weight:700;}
   #props .row{margin-bottom:10px;}
@@ -174,6 +175,7 @@
     font-size:10.5px; color:var(--muted); cursor:pointer; transition:border-color .1s;
   }
   .fxchip:hover{border-color:var(--border2); color:var(--text);}
+  .fxchip.partial{border-style:dashed;}
   .orderBtns{display:grid; grid-template-columns:1fr 1fr; gap:6px;}
   .orderBtns button{background:var(--panel2); border:1px solid var(--border); justify-content:center;}
   .orderBtns button:hover{border-color:var(--border2);}
@@ -284,8 +286,8 @@
   #labelEditor{
     position:absolute; display:none; z-index:50; width:150px; text-align:center;
     background:var(--editor-bg); border:1px solid var(--accent); color:var(--text); border-radius:7px;
-    padding:5px 8px; font-size:12px; font-family:inherit; outline:none;
-    box-shadow:0 6px 20px rgba(0,0,0,.5);
+    padding:5px 8px; font-size:12px; font-family:inherit; line-height:1.35; outline:none;
+    resize:none; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,.5);
   }
   #toast{
     position:absolute; top:16px; left:50%; transform:translateX(-50%); z-index:60;
@@ -327,7 +329,7 @@
         <circle cx="5" cy="6" r="2.6"/><circle cx="19" cy="6" r="2.6"/><circle cx="12" cy="18" r="2.6"/>
         <path d="M7 7.5 10.5 16M17 7.5 13.5 16M7.6 6h8.8"/>
       </svg>
-      NetDraw <span class="sub">v1.1.9</span>
+      NetDraw <span class="sub">v1.1.10</span>
     </div>
 
     <div class="tgroup">
@@ -460,7 +462,7 @@
         <button id="pickCancel">Cancel</button>
       </div>
       <div id="hintbar"><b>V</b> select&ensp;·&ensp;<b>C</b> connect&ensp;·&ensp;<b>Z</b> zone&ensp;·&ensp;drag empty canvas to pan&ensp;·&ensp;<b>Shift</b>+drag select&ensp;·&ensp;<b>Del</b> delete</div>
-      <input id="labelEditor" type="text" spellcheck="false">
+      <textarea id="labelEditor" rows="1" spellcheck="false"></textarea>
       <div id="toast"></div>
       <div id="recModal">
         <div class="mbox">
@@ -500,6 +502,7 @@
    ============================================================= */
 
 const NW = 104, NH = 74;          // node card size
+const FONT_STACK = "ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif";
 const GRID = 26, SNAP = 13;       // grid spacing / snap step
 const LS_KEY = "netdraw.doc.v1";
 const DOC_VERSION = 2;
@@ -8493,6 +8496,24 @@ function endpointById(id){ return nodeById(id) || zoneById(id); }
 function accentOf(n){ return n.accent || TYPES[n.type].accent; }
 function snap(v){ return snapOn ? Math.round(v / SNAP) * SNAP : v; }
 function inZone(n, z){ return n.x > z.x && n.x < z.x + z.w && n.y > z.y && n.y < z.y + z.h; }
+function zoneContains(outer, inner){
+  return inner.x >= outer.x && inner.y >= outer.y &&
+         inner.x + inner.w <= outer.x + outer.w && inner.y + inner.h <= outer.y + outer.h;
+}
+/* selected zones plus every zone fully nested inside them (recursively) */
+function collectDescendantZones(roots){
+  const moving = new Map();
+  const queue = [];
+  for(const z of roots){ if(z && !moving.has(z.id)){ moving.set(z.id, z); queue.push(z); } }
+  while(queue.length){
+    const z = queue.pop();
+    for(const o of state.zones){
+      if(o.id === z.id || moving.has(o.id)) continue;
+      if(zoneContains(z, o)){ moving.set(o.id, o); queue.push(o); }
+    }
+  }
+  return [...moving.values()];
+}
 function cleanId(v, p){ return (typeof v === "string" && v.trim()) ? v : uid(p); }
 function finiteNum(v){ return typeof v === "number" && Number.isFinite(v); }
 function blankState(){ return {nodes:[], edges:[], zones:[], journey:{steps:[]}}; }
@@ -8729,25 +8750,122 @@ function laneSnapPoint(x, y){
   if(!snapOn) return {x, y};
   for(const z of state.zones){
     if(z.kind !== "swimlane" || !z.lanes || !z.lanes.length) continue;
-    if(x <= z.x || x >= z.x + z.w || y <= z.y + LANE_TITLE_H || y >= z.y + z.h) continue;
+    const tH = laneTitleH(z);
+    if(x <= z.x || x >= z.x + z.w || y <= z.y + tH || y >= z.y + z.h) continue;
     const nl = z.lanes.length;
     if(z.orient !== "v"){
-      const laneH = (z.h - LANE_TITLE_H) / nl;
-      const i = clamp(Math.floor((y - z.y - LANE_TITLE_H) / laneH), 0, nl - 1);
-      const cy = z.y + LANE_TITLE_H + (i + 0.5) * laneH;
+      const laneH = (z.h - tH) / nl;
+      const i = clamp(Math.floor((y - z.y - tH) / laneH), 0, nl - 1);
+      const cy = z.y + tH + (i + 0.5) * laneH;
       if(Math.abs(y - cy) < LANE_SNAP)
-        return {x, y:cy, lane:{color:z.color, x:z.x + LANE_HEAD, y:z.y + LANE_TITLE_H + i * laneH, w:z.w - LANE_HEAD, h:laneH}};
+        return {x, y:cy, lane:{color:z.color, x:z.x + LANE_HEAD, y:z.y + tH + i * laneH, w:z.w - LANE_HEAD, h:laneH}};
       return {x, y};
     } else {
       const laneW = z.w / nl;
       const i = clamp(Math.floor((x - z.x) / laneW), 0, nl - 1);
       const cx = z.x + (i + 0.5) * laneW;
       if(Math.abs(x - cx) < LANE_SNAP)
-        return {x:cx, y, lane:{color:z.color, x:z.x + i * laneW, y:z.y + LANE_TITLE_H + LANE_HEAD, w:laneW, h:z.h - LANE_TITLE_H - LANE_HEAD}};
+        return {x:cx, y, lane:{color:z.color, x:z.x + i * laneW, y:z.y + tH + LANE_HEAD, w:laneW, h:z.h - tH - LANE_HEAD}};
       return {x, y};
     }
   }
   return {x, y};
+}
+
+/* ---------- label text layout (auto-wrap + manual line breaks) ---------- */
+const NODE_LABEL_FONT = "600 11.5px " + FONT_STACK;
+const SHAPE_LABEL_FONT = "600 12px " + FONT_STACK;
+const EDGE_LABEL_FONT = "10.5px " + FONT_STACK;
+const ZONE_LABEL_FONT = "600 11px " + FONT_STACK;
+const LANE_TITLE_FONT = "700 12px " + FONT_STACK;
+const LABEL_MAX_W = 240, EDGE_LABEL_MAX_W = 160, ZONE_LABEL_MAX_W = 200, SHAPE_TEXT_MAX = 240;
+const NODE_LABEL_LH = 13, SHAPE_LABEL_LH = 14, EDGE_LABEL_LH = 13, ZONE_LABEL_LH = 13, LANE_TITLE_LH = 15;
+let _measureCtx = null, _measureCache = new Map();
+function measureTextWidth(s, font){
+  const key = font + "\n" + s;
+  let w = _measureCache.get(key);
+  if(w === undefined){
+    if(!_measureCtx) _measureCtx = document.createElement("canvas").getContext("2d");
+    _measureCtx.font = font;
+    w = _measureCtx.measureText(s).width;
+    if(_measureCache.size > 8000) _measureCache.clear();
+    _measureCache.set(key, w);
+  }
+  return w;
+}
+/* Split on explicit newlines, then greedily word-wrap each paragraph to maxWidth.
+   Returns at least one (possibly empty) line. */
+function wrapText(text, maxWidth, font){
+  const raw = String(text == null ? "" : text);
+  const out = [];
+  const splitLong = w => {
+    const parts = []; let chunk = "";
+    for(const ch of w){
+      if(chunk && measureTextWidth(chunk + ch, font) > maxWidth){ parts.push(chunk); chunk = ch; }
+      else chunk += ch;
+    }
+    if(chunk) parts.push(chunk);
+    return parts.length ? parts : [w];
+  };
+  for(const para of raw.split(/\r?\n/)){
+    const words = para.split(/[ \t]+/).filter(Boolean);
+    if(!words.length){ out.push(""); continue; }
+    let line = "";
+    for(const w of words){
+      if(measureTextWidth(w, font) > maxWidth){
+        if(line){ out.push(line); line = ""; }
+        const parts = splitLong(w);
+        for(let i = 0; i < parts.length - 1; i++) out.push(parts[i]);
+        line = parts[parts.length - 1];
+        continue;
+      }
+      const test = line ? line + " " + w : w;
+      if(line && measureTextWidth(test, font) > maxWidth){ out.push(line); line = w; }
+      else line = test;
+    }
+    out.push(line);
+  }
+  return out.length ? out : [""];
+}
+/* one <text> whose lines are <tspan> children (first tspan has no dy) */
+function labelText(lines, o){
+  const attrs = {"text-anchor": o.anchor || "middle", "font-size": o.size, x: o.x, y: o.y};
+  if(o.weight) attrs["font-weight"] = o.weight;
+  if(o.family) attrs["font-family"] = o.family;
+  if(o.fill) attrs.fill = o.fill;
+  const t = el("text", attrs);
+  lines.forEach((ln, i) => {
+    const ts = el("tspan", {x: o.x});
+    if(i) ts.setAttribute("dy", o.lineHeight);
+    ts.textContent = ln;
+    t.appendChild(ts);
+  });
+  return t;
+}
+function shapePad(T){
+  if(T.shape === "decision" || T.shape === "data" || T.shape === "manual") return 70;
+  return 44;
+}
+function shapeWrapWidth(T, W){
+  if(T.shape === "connector") return 90;
+  return Math.max(40, W - shapePad(T));
+}
+/* swimlane title band grows with its wrapped title; 26px when single-line.
+   Capped so the lane area below never collapses (keep at least LANE_HEAD px). */
+function maxLaneTitleLines(z){
+  return Math.max(1, Math.floor((z.h - LANE_HEAD - 26) / LANE_TITLE_LH) + 1);
+}
+function swimlaneTitleLines(z){
+  const lines = wrapText(z.label, Math.max(40, z.w - 24), LANE_TITLE_FONT);
+  const max = maxLaneTitleLines(z);
+  if(lines.length > max){
+    lines.length = max;
+    lines[max - 1] = lines[max - 1].replace(/\s+$/, "") + "…";
+  }
+  return lines;
+}
+function laneTitleH(z){
+  return 26 + (swimlaneTitleLines(z).length - 1) * LANE_TITLE_LH;
 }
 
 /* metadata lines shown under the label (schema-driven, notes stay panel-only); card grows to fit.
@@ -8757,28 +8875,35 @@ function metaLines(n){
   if(T.shape) return [];
   return (T.fields || []).filter(f => f !== "notes" && n[f]).map(f => String(n[f])).slice(0, 3);
 }
+function nodeLabelLines(n){
+  return wrapText(n.label, Math.max(30, nodeW(n) - 16), NODE_LABEL_FONT);
+}
 function autoNodeW(n){
   const T = TYPES[n.type];
   if(T.shape){
-    const L = n.label.length;
-    if(T.shape === "connector") return clamp(L * 3.6 + 16, 23, 60) * 2;
-    let w = L * 7 + 44;
-    if(T.shape === "decision") w = L * 7.5 + 70;
-    if(T.shape === "data" || T.shape === "manual") w += 26;
-    return clamp(w, 96, 290);
+    if(T.shape === "connector"){
+      const lines = wrapText(n.label, 90, SHAPE_LABEL_FONT);
+      const lw = Math.max(...lines.map(s => measureTextWidth(s, SHAPE_LABEL_FONT)));
+      return clamp(Math.max(lw + 18, lines.length * SHAPE_LABEL_LH + 14, 28), 28, 150);
+    }
+    const lines = wrapText(n.label, shapeWrapWidth(T, SHAPE_TEXT_MAX), SHAPE_LABEL_FONT);
+    const lw = Math.max(...lines.map(s => measureTextWidth(s, SHAPE_LABEL_FONT)));
+    return clamp(lw + shapePad(T), 96, 290);
   }
-  const need = Math.max(NW, n.label.length * 6.8 + 24, ...metaLines(n).map(s => s.length * 5.9 + 26));
-  return clamp(need, NW, 240);
+  const lines = wrapText(n.label, LABEL_MAX_W - 24, NODE_LABEL_FONT);
+  const labelNeed = Math.max(...lines.map(s => measureTextWidth(s, NODE_LABEL_FONT))) + 24;
+  const need = Math.max(NW, labelNeed, ...metaLines(n).map(s => s.length * 5.9 + 26));
+  return clamp(need, NW, LABEL_MAX_W);
 }
 function autoNodeH(n){
   const T = TYPES[n.type];
   if(T.shape){
     if(T.shape === "connector") return autoNodeW(n);
-    if(T.shape === "decision") return 76;
-    if(T.shape === "document") return 62;
-    return 54;
+    const lines = wrapText(n.label, shapeWrapWidth(T, nodeW(n)), SHAPE_LABEL_FONT);
+    const base = T.shape === "decision" ? 76 : T.shape === "document" ? 62 : 54;
+    return Math.max(base, lines.length * SHAPE_LABEL_LH + 14);
   }
-  return NH + metaLines(n).length * 12.5;
+  return NH + (nodeLabelLines(n).length - 1) * NODE_LABEL_LH + metaLines(n).length * 12.5;
 }
 function minNodeSize(n){
   const T = TYPES[n.type];
@@ -8874,9 +8999,10 @@ function renderNode(n){
     if(T.shape === "predefined"){
       g.appendChild(el("path", {d:`M10 0 V ${H} M ${W-10} 0 V ${H}`, stroke:acc, "stroke-opacity":.5, "stroke-width":1.2, fill:"none"}));
     }
-    const t = el("text", {x:W/2, y:H/2 + 4.2, "text-anchor":"middle", "font-size":12, "font-weight":600, fill:tc("shapeText")});
-    t.textContent = n.label;
-    g.appendChild(t);
+    const lines = wrapText(n.label, shapeWrapWidth(T, W), SHAPE_LABEL_FONT);
+    const startY = H/2 - (lines.length - 1) * SHAPE_LABEL_LH / 2 + 4.2;
+    g.appendChild(labelText(lines, {x:W/2, y:startY, anchor:"middle", size:12, weight:600,
+      fill:tc("shapeText"), lineHeight:SHAPE_LABEL_LH}));
   } else {
     const card = el("rect", {class:"card", width:W, height:H, rx:14, fill:"url(#cardGrad)",
       stroke: sel ? acc : (isThreat ? tc("threatStroke") : tc("neutralStroke")),
@@ -8894,11 +9020,12 @@ function renderNode(n){
       ig.innerHTML = ICONS[T.icon || n.type] || ICONS.cloud;
       g.appendChild(ig);
     }
-    const t = el("text", {x:W/2, y:62, "text-anchor":"middle", "font-size":11.5, "font-weight":600, fill:tc("nodeText")});
-    t.textContent = n.label;
-    g.appendChild(t);
+    const lines = wrapText(n.label, Math.max(30, W - 16), NODE_LABEL_FONT);
+    g.appendChild(labelText(lines, {x:W/2, y:62, anchor:"middle", size:11.5, weight:600,
+      fill:tc("nodeText"), lineHeight:NODE_LABEL_LH}));
+    const metaTop = 75 + (lines.length - 1) * NODE_LABEL_LH;
     metaLines(n).forEach((s, i) => {
-      const m = el("text", {x:W/2, y:75 + i * 12.5, "text-anchor":"middle", "font-size":9.5, fill:tc("metaText"),
+      const m = el("text", {x:W/2, y:metaTop + i * 12.5, "text-anchor":"middle", "font-size":9.5, fill:tc("metaText"),
         "font-family":"ui-monospace, Consolas, monospace"});
       m.textContent = s;
       g.appendChild(m);
@@ -9171,12 +9298,14 @@ function renderEdge(e){
   g.appendChild(vis);
   if(sneak) g.appendChild(buildFootsteps(geo));
   if(e.label){
-    const w = e.label.length * 6.4 + 18;
-    g.appendChild(el("rect", {x:geo.mid.x - w/2, y:geo.mid.y - 10, width:w, height:20, rx:9,
+    const lines = wrapText(e.label, EDGE_LABEL_MAX_W - 18, EDGE_LABEL_FONT);
+    const w = Math.max(...lines.map(s => measureTextWidth(s, EDGE_LABEL_FONT))) + 18;
+    const h = lines.length * EDGE_LABEL_LH + 8;
+    g.appendChild(el("rect", {x:geo.mid.x - w/2, y:geo.mid.y - h/2, width:w, height:h, rx:9,
       fill:tc("edgeLabelBg"), stroke:tc("edgeLabelStroke"), "stroke-width":1}));
-    const t = el("text", {x:geo.mid.x, y:geo.mid.y + 3.6, "text-anchor":"middle", "font-size":10.5, fill:tc("edgeLabelText")});
-    t.textContent = e.label;
-    g.appendChild(t);
+    const startY = geo.mid.y - (lines.length - 1) * EDGE_LABEL_LH / 2 + 3.6;
+    g.appendChild(labelText(lines, {x:geo.mid.x, y:startY, anchor:"middle", size:10.5,
+      fill:tc("edgeLabelText"), lineHeight:EDGE_LABEL_LH}));
   }
   if(sel && e.route === "elbow"){
     for(const h of (geo.handles || [])){
@@ -9194,22 +9323,23 @@ function addZoneHandles(g, z){
       cursor: (c === "nw" || c === "se") ? "nwse-resize" : "nesw-resize"}));
   }
 }
-const LANE_TITLE_H = 26, LANE_HEAD = 22;
+const LANE_HEAD = 22;
 function renderSwimlane(z){
   const sel = selection.has(z.id);
   const col = z.color;
   const g = el("g", {class:"zoneg", "data-zone":z.id});
   const lanes = (z.lanes && z.lanes.length) ? z.lanes : ["Lane 1"];
   const n = lanes.length;
+  const tH = laneTitleH(z), titleLines = swimlaneTitleLines(z);
   g.appendChild(el("rect", {x:z.x, y:z.y, width:z.w, height:z.h, rx:10, fill:col, "fill-opacity":.03,
     stroke:col, "stroke-opacity": sel ? .95 : .55, "stroke-width": sel ? 2 : 1.4}));
   // title band (rounded to match the frame's top corners)
   g.appendChild(el("path", {fill:col, "fill-opacity":.13,
-    d:`M ${z.x+10} ${z.y} H ${z.x+z.w-10} A 10 10 0 0 1 ${z.x+z.w} ${z.y+10} V ${z.y+LANE_TITLE_H} H ${z.x} V ${z.y+10} A 10 10 0 0 1 ${z.x+10} ${z.y} Z`}));
-  const tt = el("text", {x:z.x + z.w/2, y:z.y + 17.5, "text-anchor":"middle", "font-size":12, "font-weight":700, fill:col});
-  tt.textContent = z.label;
-  g.appendChild(tt);
-  const ly = z.y + LANE_TITLE_H, lh = z.h - LANE_TITLE_H;
+    d:`M ${z.x+10} ${z.y} H ${z.x+z.w-10} A 10 10 0 0 1 ${z.x+z.w} ${z.y+10} V ${z.y+tH} H ${z.x} V ${z.y+10} A 10 10 0 0 1 ${z.x+10} ${z.y} Z`}));
+  const titleY = z.y + (tH - (titleLines.length - 1) * LANE_TITLE_LH) / 2 + 4.5;
+  g.appendChild(labelText(titleLines, {x:z.x + z.w/2, y:titleY, anchor:"middle", size:12, weight:700,
+    fill:col, lineHeight:LANE_TITLE_LH}));
+  const ly = z.y + tH, lh = z.h - tH;
   if(z.orient !== "v"){
     const laneH = lh / n;
     lanes.forEach((name, i) => {
@@ -9245,12 +9375,15 @@ function renderZone(z){
   const g = el("g", {class:"zoneg", "data-zone":z.id});
   g.appendChild(el("rect", {x:z.x, y:z.y, width:z.w, height:z.h, rx:16, fill:z.color, "fill-opacity":.055,
     stroke:z.color, "stroke-opacity": sel ? .95 : .5, "stroke-width": sel ? 2 : 1.4, "stroke-dasharray":"10 7"}));
-  const tw = z.label.length * 6.6 + 22;
-  g.appendChild(el("rect", {x:z.x + 14, y:z.y - 11, width:tw, height:22, rx:8,
+  const lines = wrapText(z.label, ZONE_LABEL_MAX_W - 22, ZONE_LABEL_FONT);
+  const tw = Math.max(...lines.map(s => measureTextWidth(s, ZONE_LABEL_FONT))) + 22;
+  const th = lines.length * ZONE_LABEL_LH + 9;
+  const tx = z.x + 14, ty = z.y + 11 - th;
+  g.appendChild(el("rect", {x:tx, y:ty, width:tw, height:th, rx:8,
     fill:tc("chipBg"), stroke:z.color, "stroke-opacity":.55, "stroke-width":1}));
-  const t = el("text", {x:z.x + 14 + tw/2, y:z.y + 4, "text-anchor":"middle", "font-size":11, "font-weight":600, fill:z.color});
-  t.textContent = z.label;
-  g.appendChild(t);
+  const startY = ty + (th - (lines.length - 1) * ZONE_LABEL_LH) / 2 + 3.8;
+  g.appendChild(labelText(lines, {x:tx + tw/2, y:startY, anchor:"middle", size:11, weight:600,
+    fill:z.color, lineHeight:ZONE_LABEL_LH}));
   if(sel) addZoneHandles(g, z);
   return g;
 }
@@ -10000,9 +10133,13 @@ svg.addEventListener("pointerdown", e => {
       selection = new Set([id]);
       renderAll();
     }
-    const z = zoneById(id);
-    const members = state.nodes.filter(n => inZone(n, z)).map(n => ({n, ox:n.x - wp.x, oy:n.y - wp.y}));
-    drag = {kind:"zmove", z, ox:z.x - wp.x, oy:z.y - wp.y, members, moved:false};
+    const movingZones = collectDescendantZones(state.zones.filter(x => selection.has(x.id)));
+    const nodeSet = new Set();
+    for(const mz of movingZones) for(const n of state.nodes) if(inZone(n, mz)) nodeSet.add(n);
+    drag = {kind:"zmove",
+      zparts: movingZones.map(mz => ({z:mz, ox:mz.x - wp.x, oy:mz.y - wp.y})),
+      parts: [...nodeSet].map(n => ({n, ox:n.x - wp.x, oy:n.y - wp.y})),
+      moved:false};
     svg.setPointerCapture(e.pointerId);
     return;
   }
@@ -10055,9 +10192,9 @@ window.addEventListener("pointermove", e => {
     markLinkTarget(over && over !== drag.from ? over : null);
   }
   else if(drag.kind === "zmove"){
-    drag.moved = true;
-    drag.z.x = snap(wp.x + drag.ox); drag.z.y = snap(wp.y + drag.oy);
-    for(const p of drag.members){ p.n.x = snap(wp.x + p.ox); p.n.y = snap(wp.y + p.oy); }
+    drag.moved = drag.zparts.length > 0 || drag.parts.length > 0;
+    for(const p of drag.zparts){ p.z.x = snap(wp.x + p.ox); p.z.y = snap(wp.y + p.oy); }
+    for(const p of drag.parts){ p.n.x = snap(wp.x + p.ox); p.n.y = snap(wp.y + p.oy); }
     renderAll();
   }
   else if(drag.kind === "nresize"){
@@ -10201,7 +10338,9 @@ function contentBounds(){
   }
   for(const z of state.zones){
     x0 = Math.min(x0, z.x); x1 = Math.max(x1, z.x + z.w);
-    y0 = Math.min(y0, z.y - 14); y1 = Math.max(y1, z.y + z.h);   // -14: zone label tag sits above the border
+    const tagH = z.kind === "swimlane" ? 0
+      : wrapText(z.label, ZONE_LABEL_MAX_W - 22, ZONE_LABEL_FONT).length * ZONE_LABEL_LH + 9;
+    y0 = Math.min(y0, z.y + 11 - tagH); y1 = Math.max(y1, z.y + z.h);   // tag sits above the border
   }
   return {x0, y0, x1, y1};
 }
@@ -10236,16 +10375,21 @@ function openEditor(target){
     val = n.label;
   } else if(target.kind === "zone"){
     const z = zoneById(target.id); if(!z) return;
-    sp = z.kind === "swimlane"
-      ? toScreen(z.x + z.w/2, z.y + 13)
-      : toScreen(z.x + 14 + (z.label.length * 6.6 + 22)/2, z.y);
+    if(z.kind === "swimlane"){
+      sp = toScreen(z.x + z.w/2, z.y + laneTitleH(z)/2);
+    } else {
+      const lines = wrapText(z.label, ZONE_LABEL_MAX_W - 22, ZONE_LABEL_FONT);
+      const tw = Math.max(...lines.map(s => measureTextWidth(s, ZONE_LABEL_FONT))) + 22;
+      const th = lines.length * ZONE_LABEL_LH + 9;
+      sp = toScreen(z.x + 14 + tw/2, z.y + 11 - th/2);
+    }
     val = z.label;
   } else if(target.kind === "lane"){
     const z = zoneById(target.id); if(!z || !z.lanes || !z.lanes[target.lane]) return;
-    const n = z.lanes.length, i = target.lane;
+    const n = z.lanes.length, i = target.lane, tH = laneTitleH(z);
     sp = z.orient !== "v"
-      ? toScreen(z.x + 70, z.y + LANE_TITLE_H + (i + 0.5) * (z.h - LANE_TITLE_H) / n)
-      : toScreen(z.x + (i + 0.5) * z.w / n, z.y + LANE_TITLE_H + 11);
+      ? toScreen(z.x + 70, z.y + tH + (i + 0.5) * (z.h - tH) / n)
+      : toScreen(z.x + (i + 0.5) * z.w / n, z.y + tH + 11);
     val = z.lanes[i];
   } else {
     const ed = edgeById(target.id); if(!ed) return;
@@ -10255,10 +10399,15 @@ function openEditor(target){
   }
   labelEditor.style.display = "block";
   labelEditor.style.left = (sp.x - 75) + "px";
-  labelEditor.style.top = (sp.y - 14) + "px";
+  labelEditor.style.top = (sp.y - 18) + "px";
   labelEditor.value = val;
+  sizeEditor();
   // defer focus: the pointerdown that triggered this will move focus as its default action
   setTimeout(() => { if(editTarget){ labelEditor.focus(); labelEditor.select(); } }, 0);
+}
+function sizeEditor(){
+  labelEditor.style.height = "auto";
+  labelEditor.style.height = Math.min(labelEditor.scrollHeight, 160) + "px";
 }
 function commitEditor(){
   if(!editTarget) return;
@@ -10275,15 +10424,261 @@ function commitEditor(){
 function hideEditor(){ editTarget = null; labelEditor.style.display = "none"; }
 labelEditor.addEventListener("keydown", e => {
   e.stopPropagation();
-  if(e.key === "Enter") commitEditor();
-  if(e.key === "Escape") hideEditor();
+  if(e.key === "Escape"){ hideEditor(); return; }
+  if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); commitEditor(); }
 });
+labelEditor.addEventListener("input", sizeEditor);
 labelEditor.addEventListener("blur", commitEditor);
 
 /* ---------- properties panel ---------- */
+const MIXED = Symbol("mixed");
+const MIXED_OPT = "__mixed__";
+function selectionTargets(){
+  const out = [];
+  for(const id of selection){
+    const n = nodeById(id), e = edgeById(id), z = zoneById(id);
+    if(n) out.push({kind:"node", obj:n});
+    else if(e) out.push({kind:"edge", obj:e});
+    else if(z) out.push({kind:"zone", obj:z});
+  }
+  return out;
+}
+/* shared value across objs, or MIXED when they differ */
+function commonValue(objs, get){
+  if(!objs.length) return undefined;
+  const first = get(objs[0]);
+  return objs.every(o => get(o) === first) ? first : MIXED;
+}
+function updateMultiProps(){
+  const targets = selectionTargets();
+  if(targets.length < 2){ propsEl.style.display = "none"; return; }
+  const nodes = targets.filter(t => t.kind === "node").map(t => t.obj);
+  const edges = targets.filter(t => t.kind === "edge").map(t => t.obj);
+  const zones = targets.filter(t => t.kind === "zone").map(t => t.obj);
+  const allNodes = nodes.length === targets.length;
+  const allEdges = edges.length === targets.length;
+  const allZones = zones.length === targets.length;
+  const allSwim = allZones && zones.every(z => z.kind === "swimlane");
+  const hasEdges = edges.length > 0;
+  const sameNodeType = allNodes && nodes.every(n => n.type === nodes[0].type);
+
+  const orderControls = () => `
+      <div class="row"><label>Object order</label><div class="orderBtns">
+        <button data-order="toBack" title="Send to back">Back</button>
+        <button data-order="back" title="Move backward one step">Backward</button>
+        <button data-order="forward" title="Move forward one step">Forward</button>
+        <button data-order="toFront" title="Bring to front">Front</button>
+      </div></div>`;
+  const wireOrderControls = () => {
+    propsEl.querySelectorAll("[data-order]").forEach(btn => {
+      btn.addEventListener("click", () => reorderSelection(btn.dataset.order));
+    });
+  };
+  const wireMultiText = (sel, apply) => {
+    const inp = propsEl.querySelector(sel);
+    inp.addEventListener("change", e => { apply(e.target.value.trim()); commit(); renderAll(); });
+    inp.addEventListener("keydown", e => { e.stopPropagation(); if(e.key === "Enter" && inp.tagName === "INPUT") e.target.blur(); });
+  };
+  const wireMultiSelect = (sel, apply) => {
+    propsEl.querySelector(sel).addEventListener("change", e => {
+      if(e.target.value === MIXED_OPT) return;
+      apply(e.target.value); commit(); renderAll();
+    });
+  };
+
+  const title = sameNodeType ? `${targets.length} × ${esc(TYPES[nodes[0].type].name)}`
+    : allNodes ? `${targets.length} nodes`
+    : allEdges ? `${targets.length} connection${targets.length > 1 ? "s" : ""}`
+    : allZones ? (allSwim ? `${targets.length} swimlanes` : `${targets.length} zones`)
+    : `${targets.length} objects`;
+
+  const labelVal = commonValue(targets, t => t.obj.label);
+  const labelHTML = `<div class="row"><label>Label</label><textarea id="pLabel" rows="2" placeholder="${
+    labelVal === MIXED ? "Multiple values" : ""}">${labelVal === MIXED ? "" : esc(labelVal || "")}</textarea></div>`;
+
+  const colorApplicable = !hasEdges && (nodes.length > 0 || zones.length > 0);
+  let colorHTML = "";
+  if(colorApplicable){
+    colorHTML = `<div class="row"><label>Accent / color</label><div class="swatches">${
+      SWATCHES.map(c => {
+        const on = targets.every(t => (t.kind === "node" ? accentOf(t.obj) : t.obj.color) === c);
+        return `<div class="sw ${on ? "on" : ""}" data-c="${c}" style="background:${c}"></div>`;
+      }).join("")
+    }</div></div>`;
+  }
+
+  const nodeFields = [], nodeMeta = new Map();
+  if(allNodes){
+    for(const n of nodes){
+      const T = TYPES[n.type];
+      for(const f of (T.fields || [])){
+        if(!nodeMeta.has(f)){
+          const d = FIELD_DEFS[f];
+          nodeFields.push(f);
+          nodeMeta.set(f, {
+            cap:d.label,
+            ph:(T.phs && T.phs[f]) || d.ph || "",
+            multi:!!d.multi,
+            options:new Set(d.options || []),
+            sugs:new Set(d.sugs || [])
+          });
+        }
+        const m = nodeMeta.get(f), d = FIELD_DEFS[f];
+        (T.opts && T.opts[f] ? T.opts[f] : []).forEach(o => m.options.add(o));
+        (T.sugs && T.sugs[f] ? T.sugs[f] : []).forEach(s => m.sugs.add(s));
+      }
+    }
+  }
+
+  let nodeHTML = "";
+  if(allNodes){
+    nodeHTML = nodeFields.map(f => {
+      const m = nodeMeta.get(f);
+      const supp = nodes.filter(n => (TYPES[n.type].fields || []).includes(f));
+      const cv = commonValue(supp, n => n[f]);
+      const mixed = cv === MIXED;
+      const ph = mixed ? "Multiple values" : esc(m.ph);
+      let control;
+      if(m.options.size){
+        const list = [...m.options];
+        const raw = mixed ? "" : (cv || "");
+        const opts = (raw && !list.includes(raw)) ? [raw, ...list] : list;
+        control = `<select id="pF_${f}"><option value="" ${mixed ? "selected" : ""}>—</option>${
+          opts.map(o => `<option value="${esc(o)}" ${o === raw ? "selected" : ""}>${esc(o)}</option>`).join("")
+        }</select>`;
+      } else if(m.sugs.size){
+        control = `<input type="text" id="pF_${f}" value="${mixed ? "" : esc(cv || "")}" placeholder="${ph}" list="dl_${f}">
+          <datalist id="dl_${f}">${[...m.sugs].map(s => `<option value="${esc(s)}">`).join("")}</datalist>`;
+      } else if(m.multi){
+        control = `<textarea id="pF_${f}" rows="3" placeholder="${ph}">${mixed ? "" : esc(cv || "")}</textarea>`;
+      } else {
+        control = `<input type="text" id="pF_${f}" value="${mixed ? "" : esc(cv || "")}" placeholder="${ph}">`;
+      }
+      return `<div class="row"><label>${esc(m.cap)}</label>${control}</div>`;
+    }).join("");
+    nodeHTML += `
+      <div class="row"><label>Disposition</label><div class="fxchips">${
+        Object.entries(DISPOSITIONS).map(([k, dd]) => {
+          const all = nodes.every(n => n.disp === k);
+          const any = nodes.some(n => n.disp === k);
+          const style = all ? `border-color:${dd.color};color:${dd.color};background:${dd.color}1c` : "";
+          return `<div class="fxchip dispchip ${any && !all ? "partial" : ""}" data-disp="${k}" style="${style}">${dd.name}</div>`;
+        }).join("")
+      }</div></div>
+      <div class="row"><label>Effects / status</label><div class="fxchips">${
+        Object.entries(EFFECTS).map(([k, f]) => {
+          const all = nodes.every(n => nodeEffects(n).includes(k));
+          const any = nodes.some(n => nodeEffects(n).includes(k));
+          const style = all ? `border-color:${f.color};color:${f.color};background:${f.color}1c` : "";
+          return `<div class="fxchip ${any && !all ? "partial" : ""}" data-fx="${k}" style="${style}">${f.name}</div>`;
+        }).join("")
+      }</div></div>`;
+  }
+
+  let edgeHTML = "";
+  if(allEdges){
+    const sel = (id, defs, get) => {
+      const cv = commonValue(edges, get);
+      const mixed = cv === MIXED;
+      const raw = mixed ? MIXED_OPT : (cv || "");
+      const head = mixed ? `<option value="${MIXED_OPT}" selected>— Multiple —</option>` : "";
+      return `<select id="${id}">${head}${
+        defs.map(([val, cap]) => `<option value="${esc(val)}" ${val === raw ? "selected" : ""}>${esc(cap)}</option>`).join("")
+      }</select>`;
+    };
+    const animCV = commonValue(edges, e => !!e.anim);
+    edgeHTML = `
+      <div class="row"><label>Line style</label>${sel("pStyle", [["solid","Solid"],["dashed","Dashed"],["dotted","Dotted"],["sneakernet","Sneakernet · air gap 👣"]], e => e.style || "solid")}</div>
+      <div class="row"><label>Line route</label>${sel("pRoute", [["curved","Curved"],["straight","Straight"],["elbow","Elbow"]], e => e.route || "curved")}</div>
+      <div class="row"><label>From point</label>${sel("pFromPort", [["","Auto"],["top","Top"],["right","Right"],["bottom","Bottom"],["left","Left"]], e => cleanPort(e.fromPort))}</div>
+      <div class="row"><label>To point</label>${sel("pToPort", [["","Auto"],["top","Top"],["right","Right"],["bottom","Bottom"],["left","Left"]], e => cleanPort(e.toPort))}</div>
+      <div class="row"><label>Arrows</label>${sel("pArrows", [["none","None"],["start","Start with ←"],["end","End with →"],["both","Two-way ↔"]], e => e.arrows || "none")}</div>
+      <div class="row"><label class="checkrow"><input type="checkbox" id="pAnim" ${animCV === true ? "checked" : ""}> Animated traffic flow</label></div>`;
+  }
+
+  let zoneHTML = "";
+  if(allSwim){
+    const cv = commonValue(zones, z => z.orient === "v" ? "v" : "h");
+    const mixed = cv === MIXED;
+    zoneHTML = `
+      <div class="row"><label>Orientation</label>
+        <select id="pOrient">${mixed ? `<option value="${MIXED_OPT}" selected>— Multiple —</option>` : ""}
+          <option value="h" ${!mixed && cv !== "v" ? "selected" : ""}>Horizontal lanes (rows)</option>
+          <option value="v" ${!mixed && cv === "v" ? "selected" : ""}>Vertical lanes (columns)</option>
+        </select></div>`;
+  }
+
+  propsEl.innerHTML = `
+    <h4>${title}</h4>
+    ${labelHTML}
+    ${nodeHTML}
+    ${edgeHTML}
+    ${zoneHTML}
+    ${colorHTML}
+    ${orderControls()}
+    <button class="danger" id="pDelete">Delete ${targets.length} objects</button>`;
+
+  wireMultiText("#pLabel", v => {
+    if(!v && !allEdges) return;
+    for(const t of targets) t.obj.label = v;
+  });
+
+  if(colorApplicable){
+    propsEl.querySelectorAll(".sw").forEach(sw => sw.addEventListener("click", () => {
+      const c = sw.dataset.c;
+      for(const t of targets){
+        if(t.kind === "node") t.obj.accent = c;
+        else if(t.kind === "zone") t.obj.color = c;
+      }
+      commit(); renderAll();
+    }));
+  }
+
+  if(allNodes){
+    for(const f of nodeFields){
+      const supp = nodes.filter(n => (TYPES[n.type].fields || []).includes(f));
+      wireMultiText("#pF_" + f, v => {
+        for(const n of supp){ if(v) n[f] = v; else delete n[f]; }
+      });
+    }
+    propsEl.querySelectorAll(".dispchip").forEach(ch => ch.addEventListener("click", () => {
+      const k = ch.dataset.disp;
+      const all = nodes.every(n => n.disp === k);
+      for(const n of nodes){ if(all) delete n.disp; else n.disp = k; }
+      commit(); renderAll();
+    }));
+    propsEl.querySelectorAll(".fxchip:not(.dispchip)").forEach(ch => ch.addEventListener("click", () => {
+      const k = ch.dataset.fx;
+      const all = nodes.every(n => nodeEffects(n).includes(k));
+      for(const n of nodes){
+        const cur = nodeEffects(n);
+        n.effects = all ? cur.filter(x => x !== k) : (cur.includes(k) ? cur : [...cur, k]);
+      }
+      commit(); renderAll();
+    }));
+  }
+
+  if(allEdges){
+    wireMultiSelect("#pStyle", v => { for(const e of edges) e.style = v; });
+    wireMultiSelect("#pRoute", v => { for(const e of edges) e.route = v; });
+    wireMultiSelect("#pFromPort", v => { for(const e of edges) e.fromPort = cleanPort(v); });
+    wireMultiSelect("#pToPort", v => { for(const e of edges) e.toPort = cleanPort(v); });
+    wireMultiSelect("#pArrows", v => { for(const e of edges) e.arrows = v; });
+    const cb = propsEl.querySelector("#pAnim");
+    if(commonValue(edges, e => !!e.anim) === MIXED) cb.indeterminate = true;
+    cb.addEventListener("change", () => { for(const e of edges) e.anim = cb.checked; commit(); renderAll(); });
+  }
+
+  if(allSwim) wireMultiSelect("#pOrient", v => { for(const z of zones) z.orient = v === "v" ? "v" : "h"; });
+
+  wireOrderControls();
+  propsEl.querySelector("#pDelete").addEventListener("click", deleteSelection);
+  propsEl.style.display = "block";
+}
 function updateProps(){
   if(journeyOpen || present){ propsEl.style.display = "none"; return; }
-  if(selection.size !== 1){ propsEl.style.display = "none"; return; }
+  if(selection.size === 0){ propsEl.style.display = "none"; return; }
+  if(selection.size > 1){ updateMultiProps(); return; }
   const id = [...selection][0];
   const n = nodeById(id), ed = edgeById(id), z = zoneById(id);
   const orderControls = () => `
@@ -10331,7 +10726,7 @@ function updateProps(){
     }).join("");
     propsEl.innerHTML = `
       <h4>${esc(T.name)}</h4>
-      <div class="row"><label>${esc(T.labelCaption || "Label")}</label><input type="text" id="pLabel" value="${esc(n.label)}"></div>
+      <div class="row"><label>${esc(T.labelCaption || "Label")}</label><textarea id="pLabel" rows="2">${esc(n.label)}</textarea></div>
       ${fieldRows}
       <div class="row"><label>Disposition</label><div class="fxchips">${
         Object.entries(DISPOSITIONS).map(([k, dd]) =>
@@ -10369,7 +10764,7 @@ function updateProps(){
   } else if(z && z.kind === "swimlane"){
     propsEl.innerHTML = `
       <h4>Swimlane</h4>
-      <div class="row"><label>Title</label><input type="text" id="pLabel" value="${esc(z.label)}" placeholder="e.g. Order fulfilment"></div>
+      <div class="row"><label>Title</label><textarea id="pLabel" rows="2" placeholder="e.g. Order fulfilment">${esc(z.label)}</textarea></div>
       <div class="row"><label>Orientation</label>
         <select id="pOrient">
           <option value="h" ${z.orient !== "v" ? "selected" : ""}>Horizontal lanes (rows)</option>
@@ -10406,7 +10801,7 @@ function updateProps(){
   } else if(z){
     propsEl.innerHTML = `
       <h4>Zone / Segment</h4>
-      <div class="row"><label>Label</label><input type="text" id="pLabel" value="${esc(z.label)}" placeholder="e.g. DMZ, VLAN 20, 10.0.0.0/16"></div>
+      <div class="row"><label>Label</label><textarea id="pLabel" rows="2" placeholder="e.g. DMZ, VLAN 20, 10.0.0.0/16">${esc(z.label)}</textarea></div>
       <div class="row"><label>Color</label><div class="swatches">${
         SWATCHES.map(c => `<div class="sw ${z.color === c ? "on" : ""}" data-c="${c}" style="background:${c}"></div>`).join("")
       }</div></div>
@@ -10419,7 +10814,7 @@ function updateProps(){
   } else if(ed){
     propsEl.innerHTML = `
       <h4>Connection</h4>
-      <div class="row"><label>Label</label><input type="text" id="pLabel" value="${esc(ed.label)}" placeholder="e.g. 10 GbE, VLAN 20…"></div>
+      <div class="row"><label>Label</label><textarea id="pLabel" rows="2" placeholder="e.g. 10 GbE, VLAN 20…">${esc(ed.label)}</textarea></div>
       <div class="row"><label>Line style</label>
         <select id="pStyle">
           <option value="solid" ${ed.style === "solid" ? "selected" : ""}>Solid</option>
@@ -10460,7 +10855,7 @@ function updateProps(){
       ${orderControls()}
       <button class="danger" id="pDelete">Delete connection</button>`;
     propsEl.querySelector("#pLabel").addEventListener("change", e => { ed.label = e.target.value.trim(); commit(); renderAll(); });
-    propsEl.querySelector("#pLabel").addEventListener("keydown", e => { e.stopPropagation(); if(e.key === "Enter") e.target.blur(); });
+    propsEl.querySelector("#pLabel").addEventListener("keydown", e => { e.stopPropagation(); });
     propsEl.querySelector("#pStyle").addEventListener("change", e => { ed.style = e.target.value; commit(); renderAll(); });
     propsEl.querySelector("#pRoute").addEventListener("change", e => { ed.route = e.target.value; commit(); renderAll(); });
     propsEl.querySelector("#pFromPort").addEventListener("change", e => { ed.fromPort = cleanPort(e.target.value); commit(); renderAll(); });
@@ -10532,7 +10927,6 @@ function toast(msg){
   clearTimeout(toast._t);
   toast._t = setTimeout(() => t.style.display = "none", 2200);
 }
-const FONT_STACK = "ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif";
 function appVersion(){
   const v = document.querySelector("#logo .sub");
   return v ? v.textContent.trim() : "";
