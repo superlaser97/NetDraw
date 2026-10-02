@@ -23,14 +23,18 @@ no build step, package manager, test suite, lint, or CI. Run it by opening
   and `view = {x,y,k}`.
 - `filters` are document-wide named layers. Any node/edge/zone/s swimlane may carry
   `tags:[filterId,...]`. `activeFilters` (a `Set`) is transient UI state, not serialized;
-  when non-empty, non-matching objects are dimmed via `elemState`/`dimGroup` (edges also
-  match when both endpoints match). Keep `filters`/`tags` backward compatible through
-  `normalizeFilters` / `normalizeTags` / `pruneTags`.
+  when non-empty, non-matching objects are dimmed via `elemState`/`dimGroup`.
+  `computeFilterLit()` (cached in `filterLit` each `renderAll`) keeps an object lit when it
+  carries an active tag, when both endpoints of a connection carry an active tag, or when it
+  is a containing zone/swimlane ancestor (recursively) of a lit object. Keep
+  `filters`/`tags` backward compatible through `normalizeFilters` / `normalizeTags` /
+  `pruneTags`. Enabling lives in the floating `#filterViews` checklist (`renderFilterViews`);
+  editing lives in the `#filters` modal (`buildFiltersModal`).
 - `state` / `view` are live references to the active page. `persistCurrentPage()` copies
   them back before serialization; `setActivePage()` reassigns them. Persist before
   switching or adding pages.
 - localStorage keys: `netdraw.doc.v1` (autosaved document), `netdraw.theme.v1`,
-  `netdraw.palette.v1`.
+  `netdraw.palette.v1`, `netdraw.filterViews.v1` (floating checklist collapsed state).
 - All file import / local restore goes through `normalizeState` / `normalizeFileDoc`.
   Keep changes backward compatible and preserve ID-collision validation across nodes,
   zones, and edges.
