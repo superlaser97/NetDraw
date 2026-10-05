@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.3.0 - 2026-10-05
+
+- Updated the displayed NetDraw version to `v1.3.0`.
+- Added a hideable left sidebar with a reveal handle that remembers its state locally.
+- Reorganized the header into dropdown menus: Export (PNG/SVG/GIF), File (Save/Open JSON), and More (Journey, Rec, theme, Clear); the search box is now a compact icon button, with layout adaptations on narrow screens.
+- Added an "Extended by Ducky" byline under the app title.
+- Disposition and Effects/status property sections are now collapsible and start collapsed.
+- Added free-form **Notes** to zones, swimlanes, and connections, edited from the properties panel; hovering an object that carries notes shows a floating tooltip. Notes round-trip through save/load and are pruned on import.
+
 ## v1.2.0 - 2026-10-02
 
 - Updated the displayed NetDraw version to `v1.2.0`.
