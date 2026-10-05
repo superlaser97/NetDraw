@@ -11348,6 +11348,9 @@ window.addEventListener("resize", closeContextMenu);
 
 /* ---------- canvas pointer handling ---------- */
 svg.addEventListener("contextmenu", e => { e.preventDefault(); openContextMenu(e); });
+// Suppress the browser's middle-click autoscroll (notably Windows Chrome) so a pan drag
+// is owned by the app and always ends on pointerup instead of the browser taking over.
+svg.addEventListener("mousedown", e => { if(e.button === 1) e.preventDefault(); });
 
 // own double-click detection: pointer capture retargets native dblclick to the svg
 let lastDown = {key:null, t:0, x:0, y:0};
@@ -11367,6 +11370,7 @@ svg.addEventListener("pointerdown", e => {
 
   // pan: middle button, space, or pan tool (right-click opens the context menu)
   if(e.button === 1 || spaceDown || tool === "pan"){
+    if(e.button === 1) e.preventDefault();
     drag = {kind:"pan", sx:e.clientX, sy:e.clientY, vx:view.x, vy:view.y};
     svg.classList.add("panning");
     svg.setPointerCapture(e.pointerId);
@@ -11566,6 +11570,10 @@ window.addEventListener("pointermove", e => {
   const wp = toWorld(e.clientX, e.clientY);
 
   if(drag.kind === "pan"){
+    // Safety net: a pan must never outlive the button that started it. If no mouse
+    // button is down (missed pointerup, browser stole the pointer, alt-tab, ...),
+    // tear the drag down instead of continuing to follow the cursor.
+    if(e.buttons === 0){ endDrag(e, true); return; }
     view.x = drag.vx + (e.clientX - drag.sx);
     view.y = drag.vy + (e.clientY - drag.sy);
     applyView();
@@ -11657,6 +11665,9 @@ function endDrag(e, cancelled){
   if(!drag) return;
   const d = drag; drag = null;
   svg.classList.remove("panning");
+  if(e && e.pointerId != null && svg.hasPointerCapture && svg.hasPointerCapture(e.pointerId)){
+    try{ svg.releasePointerCapture(e.pointerId); }catch(_){}
+  }
 
   if(d.kind === "move" || d.kind === "zmove" || d.kind === "nresize" || d.kind === "zresize" || d.kind === "ebend"){
     if(d.kind === "move") tempLayer.innerHTML = "";
@@ -11720,6 +11731,13 @@ function endDrag(e, cancelled){
 window.addEventListener("pointerup", e => endDrag(e, false));
 window.addEventListener("pointercancel", e => endDrag(e, true));
 window.addEventListener("lostpointercapture", e => endDrag(e, true));
+// Losing window focus can swallow the keyup/pointerup that would end a drag or clear
+// the Space-held pan state; reset both so the canvas can't stay in a grab state.
+window.addEventListener("blur", () => {
+  spaceDown = false;
+  if(drag) endDrag(null, true);
+  svg.classList.remove("panning");
+});
 
 /* ---------- wheel zoom ---------- */
 svg.addEventListener("wheel", e => {
