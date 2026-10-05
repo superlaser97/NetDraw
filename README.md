@@ -36,7 +36,7 @@ If `xdg-open` is not available, open the file from your browser with `File -> Op
 - Save and load diagrams as one JSON file, including all pages.
 - Reset the full document from the upper-right trash button after a warning confirmation.
 - Export diagrams as PNG, SVG, or animated GIF. PNG and GIF exports include NetDraw and the current version in image software metadata.
-- Record the visible canvas as video with optional microphone or music audio; supported browsers offer available WebM/MP4 recording formats.
+- Record the visible canvas as video with optional microphone or music audio; supported browsers offer available WebM/MP4 recording formats. Recording auto-stops at 10 minutes or ~150 MB, and is stopped cleanly if you leave the page.
 
 ## Local Browser Storage
 
@@ -112,6 +112,9 @@ Use `Journey` to create a guided walkthrough for the current page. Add steps, pi
 - `L`: Draw swimlane
 - `H`: Pan tool
 - `F`: Fit diagram
+- `Shift+F`: Zoom to the current selection
+- `←` / `↑` / `→` / `↓`: Nudge selection by the grid step (`Shift` = 1 px)
+- Right-click the canvas or an object for a context menu (edit, copy, duplicate, delete, order, align, zoom, export selection)
 - `Delete` / `Backspace`: Delete selection
 - `Ctrl+Z`: Undo
 - `Ctrl+Y` or `Ctrl+Shift+Z`: Redo
@@ -127,6 +130,10 @@ Use `Journey` to create a guided walkthrough for the current page. Add steps, pi
 - `+` / `=`: Zoom in
 - `-`: Zoom out
 - `Space` (hold) + drag: Pan
+
+## Undo History
+
+Undo/redo covers edits on the current page: objects, connections, zones, notes, and their properties. Switching pages, and changes to filters/layers, page names, the theme, or recording, are not part of the undo history.
 
 ## Project Layout
 
