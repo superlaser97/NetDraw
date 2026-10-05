@@ -441,6 +441,15 @@
     background:var(--toast-bg); border:1px solid var(--toast-border); color:var(--toast-text); border-radius:10px;
     padding:8px 16px; font-size:12px; display:none;
   }
+  #noteTip{
+    position:fixed; z-index:120; pointer-events:none; display:none;
+    max-width:320px; max-height:40vh; overflow:hidden;
+    background:var(--card); border:1px solid var(--border2); border-radius:10px;
+    padding:9px 12px; box-shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+  #noteTip b{display:block; font-size:11px; font-weight:700; color:var(--text); margin-bottom:4px;}
+  #noteTip .notetip-body{font-size:12px; line-height:1.45; color:var(--muted);
+    white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;}
 
   /* ---------- record modal ---------- */
   #recModal, #filterExportModal{
@@ -654,6 +663,7 @@
       <div id="hintbar"><b>V</b> select&ensp;·&ensp;<b>B</b> box select&ensp;·&ensp;<b>C</b> connect&ensp;·&ensp;<b>Z</b> zone&ensp;·&ensp;drag empty canvas to pan&ensp;·&ensp;<b>Shift</b>+drag select&ensp;·&ensp;<b>Del</b> delete</div>
       <textarea id="labelEditor" rows="1" spellcheck="false"></textarea>
       <div id="toast"></div>
+      <div id="noteTip"></div>
       <div id="recModal">
         <div class="mbox">
           <h3>Record diagram</h3>
@@ -8847,6 +8857,7 @@ function normalizeState(doc){
       ...(etags.length ? {tags:etags} : {})
     };
   });
+  for(const o of [...nodes, ...zones, ...edges]) if(typeof o.notes !== "string" || !o.notes.trim()) delete o.notes;
   return {nodes, edges, zones, journey:normalizeJourney(doc.journey)};
 }
 function normalizeView(v){
@@ -9699,6 +9710,7 @@ function renderZone(z){
 }
 
 function renderAll(){
+  hideNoteTip();
   filterLit = present ? null : computeFilterLit();
   zonesLayer.innerHTML = "";
   for(const z of state.zones){
@@ -10717,6 +10729,7 @@ function isDoubleClick(key, e){
 
 svg.addEventListener("pointerdown", e => {
   hideEditor();
+  hideNoteTip();
   const wp = toWorld(e.clientX, e.clientY);
 
   // pan: middle / right button, space, or pan tool
@@ -10908,6 +10921,8 @@ svg.addEventListener("pointerdown", e => {
   if(!e.shiftKey && selection.size){ selection.clear(); renderAll(); }
 });
 
+svg.addEventListener("pointermove", updateNoteTip);
+svg.addEventListener("pointerleave", hideNoteTip);
 window.addEventListener("pointermove", e => {
   if(pendingFrom){
     const src = endpointById(typeof pendingFrom === "string" ? pendingFrom : pendingFrom.endpointId);
@@ -11632,6 +11647,7 @@ function updateProps(){
           `<div class="lanerow"><input type="text" data-li="${i}" value="${esc(name)}"><button class="lanedel" data-li="${i}" title="Remove lane">×</button></div>`
         ).join("")
       }<button id="laneAdd">+ Add lane</button></div>
+      <div class="row"><label>Notes</label><textarea id="pNotes" rows="3" placeholder="Free-form notes…">${esc(z.notes || "")}</textarea></div>
       <div class="row"><label>Color</label><div class="swatches">${
         SWATCHES.map(c => `<div class="sw ${z.color === c ? "on" : ""}" data-c="${c}" style="background:${c}"></div>`).join("")
       }</div></div>
@@ -11639,6 +11655,7 @@ function updateProps(){
       ${orderControls()}
       <button class="danger" id="pDelete">Delete swimlane (keeps contents)</button>`;
     wireText("#pLabel", v => { if(v) z.label = v; });
+    wireText("#pNotes", v => { if(v) z.notes = v; else delete z.notes; });
     propsEl.querySelector("#pOrient").addEventListener("change", e => { z.orient = e.target.value; commit(); renderAll(); });
     propsEl.querySelectorAll(".lanerow input").forEach(inp => {
       inp.addEventListener("change", e => { const v = e.target.value.trim(); if(v) z.lanes[+inp.dataset.li] = v; commit(); renderAll(); });
@@ -11661,6 +11678,7 @@ function updateProps(){
     propsEl.innerHTML = `
       <h4>Zone / Segment</h4>
       <div class="row"><label>Label</label><textarea id="pLabel" rows="2" placeholder="e.g. DMZ, VLAN 20, 10.0.0.0/16">${esc(z.label)}</textarea></div>
+      <div class="row"><label>Notes</label><textarea id="pNotes" rows="3" placeholder="Free-form notes…">${esc(z.notes || "")}</textarea></div>
       <div class="row"><label>Color</label><div class="swatches">${
         SWATCHES.map(c => `<div class="sw ${z.color === c ? "on" : ""}" data-c="${c}" style="background:${c}"></div>`).join("")
       }</div></div>
@@ -11668,6 +11686,7 @@ function updateProps(){
       ${orderControls()}
       <button class="danger" id="pDelete">Delete zone (keeps contents)</button>`;
     wireText("#pLabel", v => { if(v) z.label = v; });
+    wireText("#pNotes", v => { if(v) z.notes = v; else delete z.notes; });
     propsEl.querySelectorAll(".sw").forEach(sw => sw.addEventListener("click", () => { z.color = sw.dataset.c; commit(); renderAll(); }));
     wireTagChips([z]);
     wireOrderControls();
@@ -11676,6 +11695,7 @@ function updateProps(){
     propsEl.innerHTML = `
       <h4>Connection</h4>
       <div class="row"><label>Label</label><textarea id="pLabel" rows="2" placeholder="e.g. 10 GbE, VLAN 20…">${esc(ed.label)}</textarea></div>
+      <div class="row"><label>Notes</label><textarea id="pNotes" rows="3" placeholder="Free-form notes…">${esc(ed.notes || "")}</textarea></div>
       <div class="row"><label>Line style</label>
         <select id="pStyle">
           <option value="solid" ${ed.style === "solid" ? "selected" : ""}>Solid</option>
@@ -11718,6 +11738,12 @@ function updateProps(){
       <button class="danger" id="pDelete">Delete connection</button>`;
     propsEl.querySelector("#pLabel").addEventListener("change", e => { ed.label = e.target.value.trim(); commit(); renderAll(); });
     propsEl.querySelector("#pLabel").addEventListener("keydown", e => { e.stopPropagation(); });
+    propsEl.querySelector("#pNotes").addEventListener("change", e => {
+      const v = e.target.value.trim();
+      if(v) ed.notes = v; else delete ed.notes;
+      commit(); renderAll();
+    });
+    propsEl.querySelector("#pNotes").addEventListener("keydown", e => { e.stopPropagation(); });
     propsEl.querySelector("#pStyle").addEventListener("change", e => { ed.style = e.target.value; commit(); renderAll(); });
     propsEl.querySelector("#pRoute").addEventListener("change", e => { ed.route = e.target.value; commit(); renderAll(); });
     propsEl.querySelector("#pFromPort").addEventListener("change", e => { ed.fromPort = cleanPort(e.target.value); commit(); renderAll(); });
@@ -11793,6 +11819,42 @@ function toast(msg){
   t.textContent = msg; t.style.display = "block";
   clearTimeout(toast._t);
   toast._t = setTimeout(() => t.style.display = "none", 2200);
+}
+/* floating notes tooltip shown while hovering objects that carry Notes */
+function noteTipObject(target){
+  if(!target || !target.closest) return null;
+  const ng = target.closest("g[data-node]");
+  if(ng) return nodeById(ng.getAttribute("data-node"));
+  const zg = target.closest("g[data-zone]");
+  if(zg) return zoneById(zg.getAttribute("data-zone"));
+  const eg = target.closest("g[data-edge]");
+  if(eg) return edgeById(eg.getAttribute("data-edge"));
+  return null;
+}
+function showNoteTip(obj, x, y){
+  const tip = $("noteTip");
+  tip.textContent = "";
+  const head = document.createElement("b");
+  head.textContent = obj.label || "";
+  const body = document.createElement("div");
+  body.className = "notetip-body";
+  body.textContent = obj.notes;
+  tip.appendChild(head); tip.appendChild(body);
+  tip.style.display = "block";
+  const pad = 10;
+  let left = x + 16, top = y + 18;
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  if(left + w + pad > window.innerWidth) left = x - w - 16;
+  if(top + h + pad > window.innerHeight) top = y - h - 18;
+  tip.style.left = Math.max(pad, left) + "px";
+  tip.style.top = Math.max(pad, top) + "px";
+}
+function hideNoteTip(){ const tip = $("noteTip"); if(tip) tip.style.display = "none"; }
+function updateNoteTip(e){
+  if(drag || pendingFrom || present){ hideNoteTip(); return; }
+  const obj = noteTipObject(e.target);
+  if(obj && typeof obj.notes === "string" && obj.notes.trim()) showNoteTip(obj, e.clientX, e.clientY);
+  else hideNoteTip();
 }
 function appVersion(){
   const v = document.querySelector("#logo .sub");
