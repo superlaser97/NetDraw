@@ -221,6 +221,14 @@
   }
   .fxchip:hover{border-color:var(--border2); color:var(--text);}
   .fxchip.partial{border-style:dashed;}
+  .psec-head{
+    width:100%; height:auto; min-height:22px; padding:3px 5px; margin-bottom:5px;
+    justify-content:space-between; color:var(--muted); font-size:11px; font-weight:500; text-align:left;
+  }
+  .psec-head:hover{background:var(--button-hover); color:var(--text);}
+  .psec-head .pchev{transition:transform .14s; color:var(--faint);}
+  .psec.collapsed .psec-head .pchev{transform:rotate(-90deg);}
+  .psec.collapsed .psec-body{display:none;}
   .orderBtns{display:grid; grid-template-columns:1fr 1fr; gap:6px;}
   .orderBtns button{background:var(--panel2); border:1px solid var(--border); justify-content:center;}
   .orderBtns button:hover{border-color:var(--border2);}
@@ -11229,6 +11237,26 @@ function wireTagChips(objs){
     commit(); renderAll();
   }));
 }
+/* collapsible property sections (Disposition / Effects) — collapsed by default,
+   reset whenever the panel opens or the selection changes, preserved while editing */
+const propsSectionCollapsed = { disp: true, fx: true };
+let lastPropsSig = "";
+function propsSectionHTML(key, title, bodyHTML){
+  return `<div class="row psec ${propsSectionCollapsed[key] ? "collapsed" : ""}" data-sec="${key}">
+    <button class="psec-head" type="button" title="Collapse / expand ${esc(title)}">
+      <span>${esc(title)}</span>
+      <svg class="pchev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="psec-body">${bodyHTML}</div>
+  </div>`;
+}
+propsEl.addEventListener("click", e => {
+  const head = e.target.closest(".psec-head");
+  if(!head) return;
+  const sec = head.closest(".psec");
+  propsSectionCollapsed[sec.dataset.sec] = !propsSectionCollapsed[sec.dataset.sec];
+  sec.classList.toggle("collapsed", propsSectionCollapsed[sec.dataset.sec]);
+});
 function updateMultiProps(){
   const targets = selectionTargets();
   if(targets.length < 2){ propsEl.style.display = "none"; return; }
@@ -11343,23 +11371,23 @@ function updateMultiProps(){
       <div class="row"><label>Text</label><textarea id="pNoteText" rows="6" placeholder="${
         cv === MIXED ? "Multiple values" : "Annotation text…"}">${cv === MIXED ? "" : esc(cv || "")}</textarea></div>`;
     } else {
-    nodeHTML += `
-      <div class="row"><label>Disposition</label><div class="fxchips">${
+    nodeHTML +=
+      propsSectionHTML("disp", "Disposition", `<div class="fxchips">${
         Object.entries(DISPOSITIONS).map(([k, dd]) => {
           const all = nodes.every(n => n.disp === k);
           const any = nodes.some(n => n.disp === k);
           const style = all ? `border-color:${dd.color};color:${dd.color};background:${dd.color}1c` : "";
           return `<div class="fxchip dispchip ${any && !all ? "partial" : ""}" data-disp="${k}" style="${style}">${dd.name}</div>`;
         }).join("")
-      }</div></div>
-      <div class="row"><label>Effects / status</label><div class="fxchips">${
+      }</div>`) +
+      propsSectionHTML("fx", "Effects / status", `<div class="fxchips">${
         Object.entries(EFFECTS).map(([k, f]) => {
           const all = nodes.every(n => nodeEffects(n).includes(k));
           const any = nodes.some(n => nodeEffects(n).includes(k));
           const style = all ? `border-color:${f.color};color:${f.color};background:${f.color}1c` : "";
           return `<div class="fxchip ${any && !all ? "partial" : ""}" data-fx="${k}" style="${style}">${f.name}</div>`;
         }).join("")
-      }</div></div>`;
+      }</div>`);
     }
   }
 
@@ -11477,6 +11505,12 @@ function updateMultiProps(){
 function updateProps(){
   if(journeyOpen || filtersOpen || searchOpen || present){ propsEl.style.display = "none"; return; }
   if(selection.size === 0){ propsEl.style.display = "none"; return; }
+  const sig = [...selection].sort().join("|");
+  if(propsEl.style.display === "none" || sig !== lastPropsSig){
+    propsSectionCollapsed.disp = true;
+    propsSectionCollapsed.fx = true;
+  }
+  lastPropsSig = sig;
   if(selection.size > 1){ updateMultiProps(); return; }
   const id = [...selection][0];
   const n = nodeById(id), ed = edgeById(id), z = zoneById(id);
@@ -11550,17 +11584,17 @@ function updateProps(){
       <div class="row"><label>${esc(T.labelCaption || "Label")}</label><textarea id="pLabel" rows="2">${esc(n.label)}</textarea></div>
       ${fieldRows}
       ${filterChipsHTML([n])}
-      <div class="row"><label>Disposition</label><div class="fxchips">${
+      ${propsSectionHTML("disp", "Disposition", `<div class="fxchips">${
         Object.entries(DISPOSITIONS).map(([k, dd]) =>
           `<div class="fxchip dispchip" data-disp="${k}" style="${n.disp === k ? `border-color:${dd.color};color:${dd.color};background:${dd.color}1c` : ""}">${dd.name}</div>`
         ).join("")
-      }</div></div>
-      <div class="row"><label>Effects / status</label><div class="fxchips">${
+      }</div>`)}
+      ${propsSectionHTML("fx", "Effects / status", `<div class="fxchips">${
         Object.entries(EFFECTS).map(([k, f]) => {
           const on = nodeEffects(n).includes(k);
           return `<div class="fxchip" data-fx="${k}" style="${on ? `border-color:${f.color};color:${f.color};background:${f.color}1c` : ""}">${f.name}</div>`;
         }).join("")
-      }</div></div>
+      }</div>`)}
       <div class="row"><label>Accent color</label><div class="swatches">${
         SWATCHES.map(c => `<div class="sw ${accentOf(n) === c ? "on" : ""}" data-c="${c}" style="background:${c}"></div>`).join("")
       }</div></div>
