@@ -79,6 +79,18 @@
     background:var(--panel2); color:var(--muted);
   }
   .paletteToggle:hover{border-color:var(--border2);}
+  body.palette-hidden #palette{display:none;}
+  #paletteReveal{
+    position:absolute; top:50%; left:212px; transform:translateY(-50%); z-index:44;
+    display:inline-flex; width:22px; height:52px; min-width:0; padding:0;
+    background:var(--panel); border:1px solid var(--border); border-left:none;
+    border-radius:0 10px 10px 0; color:var(--muted); box-shadow:0 8px 24px rgba(0,0,0,.35);
+    transition:left .18s ease;
+  }
+  #paletteReveal svg{transition:transform .18s ease;}
+  #paletteReveal:hover{background:var(--button-hover); color:var(--text);}
+  body.palette-hidden #paletteReveal{left:0;}
+  body.palette-hidden #paletteReveal svg{transform:rotate(180deg);}
   .pgroup{margin-bottom:14px;}
   .phead{
     width:100%; height:auto; min-height:28px; padding:4px 6px 8px; border-radius:7px;
@@ -334,7 +346,7 @@
   #pickBar button{height:32px; padding:0 14px; font-weight:600; border:1px solid var(--border); background:var(--panel2); color:var(--text);}
   #pickUse{background:#123047; color:#7dd3fc; border-color:#1e4f6e;}
   #pickBar button:hover{filter:brightness(1.15);}
-  body.presenting #palette, body.presenting #topbar .tgroup, body.presenting #hintbar, body.presenting #journey, body.presenting #filters, body.presenting #search, body.presenting #filterViews, body.presenting #pagebar{display:none !important;}
+  body.presenting #palette, body.presenting #paletteReveal, body.presenting #topbar .tgroup, body.presenting #hintbar, body.presenting #journey, body.presenting #filters, body.presenting #search, body.presenting #filterViews, body.presenting #pagebar{display:none !important;}
   body.presenting #topbar{justify-content:center;}
   body.presenting #logo{margin:0;}
   #presentBar{
@@ -531,6 +543,9 @@
   </header>
 
   <div id="main">
+    <button id="paletteReveal" type="button" title="Hide sidebar" aria-label="Hide sidebar">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5"/><path d="m17 17-5-5 5-5"/></svg>
+    </button>
     <aside id="palette"></aside>
 
     <div id="canvasWrap">
@@ -637,6 +652,7 @@ const DOC_VERSION = 2;
 const APP_NAME = "NetDraw";
 const THEME_KEY = "netdraw.theme.v1";
 const PALETTE_KEY = "netdraw.palette.v1";
+const PALETTE_HIDDEN_KEY = "netdraw.paletteHidden.v1";
 const FILTER_VIEWS_KEY = "netdraw.filterViews.v1";
 const THEMES = {
   dark: {
@@ -10426,6 +10442,19 @@ function reorderSelection(mode){
 }
 
 /* ---------- palette ---------- */
+function applyPaletteHidden(hidden){
+  document.body.classList.toggle("palette-hidden", hidden);
+  const reveal = $("paletteReveal");
+  if(reveal){
+    const label = hidden ? "Show sidebar" : "Hide sidebar";
+    reveal.title = label;
+    reveal.setAttribute("aria-label", label);
+  }
+  try{ localStorage.setItem(PALETTE_HIDDEN_KEY, hidden ? "1" : "0"); }catch(_){}
+}
+function togglePalette(){
+  applyPaletteHidden(!document.body.classList.contains("palette-hidden"));
+}
 function buildPalette(){
   const root = $("palette");
   root.innerHTML = "";
@@ -12232,6 +12261,7 @@ $("btnFit").onclick = zoomFit;
 $("btnGrid").onclick = () => { gridOn = !gridOn; gridRect.style.display = gridOn ? "" : "none"; $("btnGrid").classList.toggle("active", gridOn); };
 $("btnSnap").onclick = () => { snapOn = !snapOn; $("btnSnap").classList.toggle("active", snapOn); };
 $("btnTheme").onclick = () => applyTheme(theme === "light" ? "dark" : "light");
+$("paletteReveal").onclick = togglePalette;
 $("btnPNG").onclick = () => requestExport(() => exportPNG());
 $("btnSVG").onclick = () => requestExport(() => exportSVG());
 $("btnGIF").onclick = () => requestExport(() => exportGIF());
@@ -12323,6 +12353,7 @@ function sampleState(){
 /* ---------- boot ---------- */
 function boot(){
   buildPalette();
+  try{ applyPaletteHidden(localStorage.getItem(PALETTE_HIDDEN_KEY) === "1"); }catch(_){ applyPaletteHidden(false); }
   try{ applyTheme(localStorage.getItem(THEME_KEY)); }catch(_){ applyTheme("dark"); }
   pages = [makePage("Page 1", blankState(), blankView())];
   activePageId = pages[0].id;
