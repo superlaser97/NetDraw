@@ -28,13 +28,15 @@ no build step, package manager, test suite, lint, or CI. Run it by opening
   carries an active tag, when both endpoints of a connection carry an active tag, or when it
   is a containing zone/swimlane ancestor (recursively) of a lit object. Keep
   `filters`/`tags` backward compatible through `normalizeFilters` / `normalizeTags` /
-  `pruneTags`. Enabling lives in the floating `#filterViews` checklist (`renderFilterViews`);
-  editing lives in the `#filters` modal (`buildFiltersModal`).
+  `pruneTags`. Enabling lives in the header **Filters** dropdown (`#menuFilters`,
+  `renderFilterViews` / `toggleFilterMenu`); editing lives in the `#filters` modal
+  (`buildFiltersModal`). The editor supports a color palette popover (`openFilterPalette`)
+  and pointer-based drag-to-reorder (`initFilterDrag`).
 - `state` / `view` are live references to the active page. `persistCurrentPage()` copies
   them back before serialization; `setActivePage()` reassigns them. Persist before
   switching or adding pages.
 - localStorage keys: `netdraw.doc.v1` (autosaved document), `netdraw.theme.v1`,
-  `netdraw.palette.v1`, `netdraw.filterViews.v1` (floating checklist collapsed state).
+  `netdraw.palette.v1`.
 - All file import / local restore goes through `normalizeState` / `normalizeFileDoc`.
   Keep changes backward compatible and preserve ID-collision validation across nodes,
   zones, and edges.

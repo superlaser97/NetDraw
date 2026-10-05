@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.4.0 - 2026-10-05
+
+- Updated the displayed NetDraw version to `v1.4.0`.
+- Replaced the floating **Filter views** checklist with a dropdown opened from the header **Filters** button; it lists filters with enable/disable checkboxes, a clear action, and an **Edit filters…** entry.
+- Revamped the filter editor: compact composer, a color palette popover (replacing click-to-cycle dots), inline enable/disable toggles per row, and drag-to-reorder with live preview.
+- Moved the light/dark theme toggle out of the **More** menu and into the header toolbar, next to the other action menus.
+
+## v1.3.0 - 2026-10-05
+
+- Updated the displayed NetDraw version to `v1.3.0`.
+- Added a hideable left sidebar with a reveal handle that remembers its state locally.
+- Reorganized the header into dropdown menus: Export (PNG/SVG/GIF), File (Save/Open JSON), and More (Journey, Rec, Clear); the search box is now a compact icon button, with layout adaptations on narrow screens.
+- Added an "Extended by Ducky" byline under the app title.
+- Disposition and Effects/status property sections are now collapsible and start collapsed.
+- Added free-form **Notes** to zones, swimlanes, and connections, edited from the properties panel; hovering an object that carries notes shows a floating tooltip. Notes round-trip through save/load and are pruned on import.
+
 ## v1.2.0 - 2026-10-02
 
 - Updated the displayed NetDraw version to `v1.2.0`.
