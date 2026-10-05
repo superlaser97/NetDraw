@@ -55,6 +55,34 @@
   .spacer{flex:1;}
   .btn-text{font-weight:600;}
 
+  /* ---------- header dropdown menus ---------- */
+  .tgroup.menu{position:relative;}
+  .hmenu{
+    position:absolute; top:calc(100% + 7px); right:0; z-index:130; min-width:178px;
+    display:none; flex-direction:column; gap:2px; padding:5px;
+    background:var(--panel2); border:1px solid var(--border2); border-radius:10px;
+    box-shadow:0 16px 50px rgba(0,0,0,.55);
+  }
+  .hmenu.open{display:flex;}
+  .hmenu button{
+    width:100%; height:30px; justify-content:flex-start; gap:9px; padding:0 9px;
+    font-weight:500; color:var(--muted);
+  }
+  .hmenu button:hover{background:var(--button-hover); color:var(--text);}
+  .hmenu button.active{background:var(--button-active); color:var(--accent);}
+  .hmenu button .hcheck{margin-left:auto; opacity:0; color:var(--accent); font-weight:700;}
+  .hmenu button.active .hcheck{opacity:1;}
+  .hmenu .hmsep{height:1px; background:var(--border); margin:4px 2px;}
+  .hmenu button.danger{color:#fda4af;}
+  @media (max-width:1080px){
+    #topbar{gap:7px;}
+    #topbar .btn-label{display:none;}
+  }
+  @media (max-width:900px){
+    #logo .sub{display:none;}
+    #logo{font-size:0; gap:0; margin-right:2px;}
+  }
+
   /* ---------- main ---------- */
   #main{flex:1; display:flex; min-height:0; position:relative;}
 
@@ -295,7 +323,7 @@
 
   /* ---------- search palette ---------- */
   .searchbox{
-    width:190px; justify-content:flex-start; gap:7px; padding:0 10px;
+    width:32px; justify-content:center; padding:0;
     background:var(--panel); border:1px solid var(--border); color:var(--faint);
     font-weight:400; overflow:hidden;
   }
@@ -463,8 +491,7 @@
 
     <div class="tgroup">
       <button id="btnSearch" class="searchbox" title="Search objects by label, device name, IP address, DNS name or note text">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
-        <span>Search objects…</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
       </button>
     </div>
 
@@ -495,50 +522,69 @@
       </button>
     </div>
 
-    <div class="tgroup">
-      <button id="btnTheme" class="btn-text" title="Switch to light mode">
-        <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-        <span id="themeLabel">Light</span>
-      </button>
-    </div>
-
     <div class="spacer"></div>
 
     <div class="tgroup">
-      <button id="btnPNG" class="btn-text" title="Export as PNG image">PNG</button>
-      <button id="btnSVG" class="btn-text" title="Export as SVG vector">SVG</button>
-      <button id="btnGIF" class="btn-text" title="Export animated GIF (seamless 1.6 s loop)">GIF</button>
-      <button id="btnJSON" class="btn-text" title="Save diagram as JSON file (Ctrl+S)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-        Save
-      </button>
-      <button id="btnOpen" class="btn-text" title="Open diagram JSON file">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14V3m0 0L8 7m4-4 4 4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-        Open
-      </button>
-    </div>
-    <div class="tgroup">
-      <button id="btnJourney" class="btn-text" title="Journey / narration">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l11-2v12l-11 2z"/><path d="M9 6 4 4v12l5 2z"/><path d="M9 6v12"/></svg>
-        Journey
-      </button>
-    </div>
-    <div class="tgroup">
       <button id="btnFilters" class="btn-text" title="Filters / layers">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16l-6.2 7.3V19l-3.6-1.8v-4.9z"/></svg>
-        Filters<span id="filterBadge" class="filtbadge" style="display:none">0</span>
+        <span class="btn-label">Filters</span><span id="filterBadge" class="filtbadge" style="display:none">0</span>
       </button>
     </div>
-    <div class="tgroup">
-      <button id="btnRec" class="btn-text" title="Record the diagram as video, with optional mic narration or music">
-        <svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5" fill="#ef4444"/></svg>
-        <span>Rec</span>
+
+    <div class="tgroup menu">
+      <button id="btnExport" class="btn-text" title="Export diagram">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <span class="btn-label">Export</span>
+        <svg class="hchev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
+      <div class="hmenu" id="menuExport">
+        <button id="btnPNG" title="Export as PNG image">PNG image</button>
+        <button id="btnSVG" title="Export as SVG vector">SVG vector</button>
+        <button id="btnGIF" title="Export animated GIF (seamless 1.6 s loop)">Animated GIF</button>
+      </div>
     </div>
-    <div class="tgroup">
-      <button id="btnClear" title="Reset document">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M9 6V4h6v2M7 6l1 14h8l1-14M10 10v6M14 10v6"/></svg>
+
+    <div class="tgroup menu">
+      <button id="btnFile" class="btn-text" title="File">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>
+        <span class="btn-label">File</span>
+        <svg class="hchev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
+      <div class="hmenu" id="menuFile">
+        <button id="btnJSON" title="Save diagram as JSON file (Ctrl+S)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          Save JSON
+        </button>
+        <button id="btnOpen" title="Open diagram JSON file">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14V3m0 0L8 7m4-4 4 4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          Open JSON
+        </button>
+      </div>
+    </div>
+
+    <div class="tgroup menu">
+      <button id="btnMore" title="More actions">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+      </button>
+      <div class="hmenu" id="menuMore">
+        <button id="btnJourney" class="btn-text" title="Journey / narration">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l11-2v12l-11 2z"/><path d="M9 6 4 4v12l5 2z"/><path d="M9 6v12"/></svg>
+          Journey<span class="hcheck">✓</span>
+        </button>
+        <button id="btnRec" class="btn-text" title="Record the diagram as video, with optional mic narration or music">
+          <svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5" fill="#ef4444"/></svg>
+          Rec
+        </button>
+        <button id="btnTheme" class="btn-text" title="Switch to light mode">
+          <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <span id="themeLabel">Light</span>
+        </button>
+        <div class="hmsep"></div>
+        <button id="btnClear" class="danger" title="Reset document">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M9 6V4h6v2M7 6l1 14h8l1-14M10 10v6M14 10v6"/></svg>
+          Clear
+        </button>
+      </div>
     </div>
   </header>
 
@@ -11663,6 +11709,7 @@ window.addEventListener("keydown", e => {
   if(journeyOpen && e.key === "Escape"){ toggleJourney(); e.preventDefault(); return; }
   if(filtersOpen && e.key === "Escape"){ toggleFilters(); e.preventDefault(); return; }
   if(searchOpen && e.key === "Escape"){ closeSearch(); e.preventDefault(); return; }
+  if(e.key === "Escape" && document.querySelector(".hmenu.open")){ closeHeaderMenus(); e.preventDefault(); return; }
   if(e.code === "Space"){ spaceDown = true; if(!drag) svg.classList.add("panning"); e.preventDefault(); return; }
   const mod = e.ctrlKey || e.metaKey;
   if(mod && e.key.toLowerCase() === "z" && !e.shiftKey){ undo(); e.preventDefault(); }
@@ -12296,6 +12343,20 @@ $("fileInput").addEventListener("change", e => { if(e.target.files[0]) importJSO
 $("pageAdd").onclick = addPage;
 $("pageDelete").onclick = deleteCurrentPage;
 $("btnClear").onclick = resetDocument;
+
+/* ---------- header dropdown menus ---------- */
+function closeHeaderMenus(){ document.querySelectorAll(".hmenu.open").forEach(m => m.classList.remove("open")); }
+[["btnExport","menuExport"], ["btnFile","menuFile"], ["btnMore","menuMore"]].forEach(([btnId, menuId]) => {
+  const btn = $(btnId), menu = $(menuId);
+  btn.onclick = e => {
+    e.stopPropagation();
+    const wasOpen = menu.classList.contains("open");
+    closeHeaderMenus();
+    if(!wasOpen) menu.classList.add("open");
+  };
+});
+document.addEventListener("click", e => { if(!e.target.closest(".tgroup.menu")) closeHeaderMenus(); });
+document.querySelectorAll(".hmenu button").forEach(b => b.addEventListener("click", closeHeaderMenus));
 
 /* ---------- sample diagram ---------- */
 function sampleState(){
