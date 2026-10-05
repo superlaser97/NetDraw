@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.0 - 2026-10-05
+
+- Updated the displayed NetDraw version to `v1.4.0`.
+- Replaced the floating **Filter views** checklist with a dropdown opened from the header **Filters** button; it lists filters with enable/disable checkboxes, a clear action, and an **Edit filters…** entry.
+- Revamped the filter editor: compact composer, a color palette popover (replacing click-to-cycle dots), inline enable/disable toggles per row, and drag-to-reorder with live preview.
+
 ## v1.3.0 - 2026-10-05
 
 - Updated the displayed NetDraw version to `v1.3.0`.

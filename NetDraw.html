@@ -281,30 +281,29 @@
   #jPlay.jprimary{height:36px; padding:0 18px; background:#123047; color:#7dd3fc; border:1px solid #1e4f6e; font-weight:600;}
   #jPlay.jprimary:hover{background:#163a56;}
 
-  /* ---------- filters: floating view checklist ---------- */
-  #filterViews{
-    position:absolute; top:14px; left:14px; z-index:40; width:212px;
-    background:var(--props-bg); backdrop-filter:blur(8px);
-    border:1px solid var(--border); border-radius:12px; overflow:hidden;
-    box-shadow:0 14px 40px rgba(0,0,0,.45);
-  }
-  #filterViews.collapsed .fvlist{display:none;}
-  .fvhead{display:flex; align-items:center; gap:5px; padding:8px 9px; cursor:pointer; user-select:none;}
-  .fvtitle{flex:1; font-size:11px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--faint);}
+  /* ---------- filters: header dropdown ---------- */
+  #menuFilters{min-width:238px; padding:0; gap:0;}
+  .fmenu-head{display:flex; align-items:center; gap:6px; padding:9px 11px; border-bottom:1px solid var(--border);}
+  .fmenu-title{flex:1; font-size:11px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--faint);}
   .fvcount{font-size:10px; color:var(--faint); font-variant-numeric:tabular-nums;}
-  .fvhead button{
+  .fmenu-head button{
     width:22px; height:22px; min-width:22px; padding:0; justify-content:center;
-    background:var(--panel2); border:1px solid var(--border); color:var(--muted); border-radius:6px; font-size:12px; line-height:1;
+    background:var(--panel); border:1px solid var(--border); color:var(--muted); border-radius:6px; font-size:12px; line-height:1;
   }
-  .fvhead button:hover{background:var(--button-hover); color:var(--text);}
-  .fvhead button:disabled{opacity:.35; cursor:default;}
-  .fvlist{padding:0 7px 7px; display:flex; flex-direction:column; gap:1px; max-height:44vh; overflow:auto;}
-  .fvrow{display:flex; align-items:center; gap:8px; padding:5px 7px; border-radius:7px; cursor:pointer; font-size:12px; color:var(--muted);}
-  .fvrow:hover{background:var(--panel2); color:var(--text);}
+  .fmenu-head button:hover{background:var(--button-hover); color:var(--text);}
+  .fmenu-head button:disabled{opacity:.35; cursor:default;}
+  .fmenu-list{padding:5px; display:flex; flex-direction:column; gap:1px; max-height:46vh; overflow:auto;}
+  .fmenu-list::-webkit-scrollbar{width:9px;}
+  .fmenu-list::-webkit-scrollbar-thumb{background:var(--scroll-thumb); border-radius:5px;}
+  .fvrow{display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:7px; cursor:pointer; font-size:12px; color:var(--muted);}
+  .fvrow:hover{background:var(--button-hover); color:var(--text);}
   .fvrow input[type=checkbox]{flex:0 0 auto; margin:0; accent-color:#38bdf8; cursor:pointer;}
   .fvdot{flex:0 0 11px; width:11px; height:11px; border-radius:4px;}
-  .fvname{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .fvempty{font-size:11px; color:var(--faint); font-style:italic; padding:3px 7px 5px;}
+  .fvname{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .fvempty{font-size:11px; color:var(--faint); font-style:italic; padding:6px 8px;}
+  .fmenu-foot{padding:5px; border-top:1px solid var(--border);}
+  .fmenu-foot button{width:100%; height:32px; justify-content:flex-start; gap:9px; padding:0 9px; color:var(--muted);}
+  .fmenu-foot button:hover{background:var(--button-hover); color:var(--text);}
 
   /* ---------- filters: editor modal ---------- */
   #filters{
@@ -312,22 +311,40 @@
     align-items:center; justify-content:center;
     background:rgba(4,8,16,.72); backdrop-filter:blur(4px);
   }
+  #filters .jm-box{width:min(600px,94%);}
   #fClose{width:32px; height:32px; padding:0; background:var(--panel2); border:1px solid var(--border); color:var(--muted);}
   #fClose:hover{background:var(--button-hover); color:var(--text);}
-  .fnew{display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
-  .fnew input[type=text]{flex:1; min-width:150px; background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; outline:none;}
-  .fnew input[type=text]:focus{border-color:#2f6fa8;}
-  .fnew button{height:36px; padding:0 15px; background:#123047; color:#7dd3fc; border:1px solid #1e4f6e; font-weight:600;}
-  .fnew button:hover{background:#163a56;}
-  .fcolors{display:flex; gap:5px; flex-wrap:wrap; max-width:210px;}
-  .fcolors .sw{width:20px; height:20px;}
+  .fhint{font-size:12px; color:var(--faint); line-height:1.5; margin-bottom:14px;}
+  .fcomposer{display:flex; gap:8px; align-items:center; margin-bottom:16px;}
+  .fcomposer .fnewdot{flex:0 0 36px; width:36px; min-width:36px; height:36px; border-radius:9px; border:1px solid var(--border2); cursor:pointer; padding:0;}
+  .fcomposer input[type=text]{flex:1; min-width:120px; background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:9px 10px; font-size:13px; font-family:inherit; outline:none;}
+  .fcomposer input[type=text]:focus{border-color:#2f6fa8;}
+  .fcomposer button{height:37px; padding:0 15px; background:#123047; color:#7dd3fc; border:1px solid #1e4f6e; font-weight:600;}
+  .fcomposer button:hover{background:#163a56;}
+  .fcomposer button:disabled{opacity:.45; cursor:default;}
   .flist{display:flex; flex-direction:column; gap:8px;}
-  .frow{display:flex; align-items:center; gap:9px; background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:9px 11px;}
-  .fdot{flex:0 0 14px; width:14px; height:14px; border-radius:5px; cursor:pointer;}
+  .frow{display:flex; align-items:center; gap:8px; background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:8px 10px;}
+  .frow.dragging{opacity:.45;}
+  .frow.dragover{border-color:var(--border2); box-shadow:inset 0 0 0 1px var(--border2);}
+  .fdrag{flex:0 0 auto; width:16px; text-align:center; color:var(--faint); cursor:grab; font-size:14px; line-height:1; user-select:none; touch-action:none;}
+  .fdrag:active{cursor:grabbing;}
+  .fdot{flex:0 0 18px; width:18px; min-width:18px; height:18px; border-radius:6px; cursor:pointer; border:2px solid transparent; padding:0;}
+  .fdot:hover{border-color:var(--border2);}
   .frow input[type=text]{flex:1; min-width:0; background:var(--panel); border:1px solid var(--border); color:var(--text); border-radius:7px; padding:6px 9px; font-size:12.5px; font-family:inherit; outline:none;}
   .frow input[type=text]:focus{border-color:#2f6fa8;}
+  .ftoggle{flex:0 0 auto; display:flex; align-items:center; cursor:pointer; padding:2px;}
+  .ftoggle input{margin:0; accent-color:#38bdf8; cursor:pointer;}
   .frow .fdanger{height:28px; min-width:28px; padding:0 9px; background:var(--panel); border:1px solid #58202f; color:#fda4af;}
   .frow .fdanger:hover{background:#4c1b2b;}
+  .fpalette{
+    position:fixed; z-index:200; display:none; grid-template-columns:repeat(6,22px); gap:7px;
+    padding:9px; background:var(--panel2); border:1px solid var(--border2); border-radius:10px;
+    box-shadow:0 16px 50px rgba(0,0,0,.55);
+  }
+  .fpalette.open{display:grid;}
+  #filters .jm-foot{justify-content:flex-end;}
+  #filters .jprimary{height:36px; padding:0 20px; background:#123047; color:#7dd3fc; border:1px solid #1e4f6e; font-weight:600;}
+  #filters .jprimary:hover{background:#163a56;}
   .fcount{font-size:12px; color:var(--faint);}
   .filtbadge{display:inline-flex; align-items:center; justify-content:center; min-width:16px; height:16px; padding:0 4px; margin-left:5px; border-radius:99px; background:#123047; color:#7dd3fc; font-size:10px; font-weight:700;}
   .tagtip{font-size:11px; color:var(--faint); font-style:italic;}
@@ -385,7 +402,7 @@
   #pickBar button{height:32px; padding:0 14px; font-weight:600; border:1px solid var(--border); background:var(--panel2); color:var(--text);}
   #pickUse{background:#123047; color:#7dd3fc; border-color:#1e4f6e;}
   #pickBar button:hover{filter:brightness(1.15);}
-  body.presenting #palette, body.presenting #paletteReveal, body.presenting #topbar .tgroup, body.presenting #hintbar, body.presenting #journey, body.presenting #filters, body.presenting #search, body.presenting #filterViews, body.presenting #pagebar{display:none !important;}
+  body.presenting #palette, body.presenting #paletteReveal, body.presenting #topbar .tgroup, body.presenting #hintbar, body.presenting #journey, body.presenting #filters, body.presenting #search, body.presenting #pagebar{display:none !important;}
   body.presenting #topbar{justify-content:center;}
   body.presenting #logo{margin:0;}
   #presentBar{
@@ -486,7 +503,7 @@
         <path d="M7 7.5 10.5 16M17 7.5 13.5 16M7.6 6h8.8"/>
       </svg>
       <div id="logoMeta">
-        <span class="logo-line">NetDraw <span class="sub">v1.3.0</span></span>
+        <span class="logo-line">NetDraw <span class="sub">v1.4.0</span></span>
         <span class="byline">Extended by Ducky</span>
       </div>
     </div>
@@ -547,11 +564,13 @@
 
     <div class="spacer"></div>
 
-    <div class="tgroup">
+    <div class="tgroup menu">
       <button id="btnFilters" class="btn-text" title="Filters / layers">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16l-6.2 7.3V19l-3.6-1.8v-4.9z"/></svg>
         <span class="btn-label">Filters</span><span id="filterBadge" class="filtbadge" style="display:none">0</span>
+        <svg class="hchev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
+      <div class="hmenu" id="menuFilters"></div>
     </div>
 
     <div class="tgroup menu">
@@ -644,7 +663,6 @@
       </svg>
 
       <div id="props"></div>
-      <div id="filterViews"></div>
       <div id="journey"></div>
       <div id="filters"></div>
       <div id="search"></div>
@@ -723,7 +741,6 @@ const APP_NAME = "NetDraw";
 const THEME_KEY = "netdraw.theme.v1";
 const PALETTE_KEY = "netdraw.palette.v1";
 const PALETTE_HIDDEN_KEY = "netdraw.paletteHidden.v1";
-const FILTER_VIEWS_KEY = "netdraw.filterViews.v1";
 const THEMES = {
   dark: {
     bg:"#0b1120", grid:"#1b2742", cardTop:"#1c2537", cardBottom:"#141b2b",
@@ -8690,7 +8707,6 @@ let filtersOpen = false;
 let searchOpen = false;           // search palette visibility
 let searchHits = [], searchIndex = -1;
 let filterLit = null;             // cached ids lit by active filters (incl. ancestors), or null
-let filterViewsCollapsed = (() => { try{ return localStorage.getItem(FILTER_VIEWS_KEY) === "1"; }catch(_){ return false; } })();
 let tool = "select";
 let selection = new Set();        // node, edge, and zone ids
 let diagramClipboard = null;
@@ -10037,9 +10053,9 @@ function updateFilterBadge(){
   if(activeFilters.size){ b.style.display = ""; b.textContent = activeFilters.size; }
   else b.style.display = "none";
 }
-/* floating top-left checklist: enable / disable filter views */
+/* header dropdown: enable / disable filter views */
 function renderFilterViews(){
-  const root = $("filterViews");
+  const root = $("menuFilters");
   if(!root) return;
   const rows = filters.map(f => {
     const on = activeFilters.has(f.id);
@@ -10049,57 +10065,63 @@ function renderFilterViews(){
       <span class="fvname">${esc(f.name)}</span>
     </label>`;
   }).join("");
-  root.classList.toggle("collapsed", filterViewsCollapsed);
   root.innerHTML = `
-    <div class="fvhead" id="fvHead">
-      <span class="fvtitle">Filter views</span>
+    <div class="fmenu-head">
+      <span class="fmenu-title">Filter views</span>
       <span class="fvcount">${activeFilters.size}/${filters.length}</span>
       <button id="fvClear" title="Clear active filters" ${activeFilters.size ? "" : "disabled"}>⨯</button>
-      <button id="fvEdit" title="Edit filters">⚙</button>
-      <button id="fvCollapse" title="${filterViewsCollapsed ? "Expand" : "Collapse"}">${filterViewsCollapsed ? "▸" : "▾"}</button>
     </div>
-    <div class="fvlist">${rows || '<div class="fvempty">No filters yet — click the gear to add one.</div>'}</div>`;
-  $("fvHead").addEventListener("click", e => {
-    if(e.target.closest("button")) return;
-    filterViewsCollapsed = !filterViewsCollapsed; saveFilterViewsPref(); renderFilterViews();
-  });
-  $("fvCollapse").addEventListener("click", () => {
-    filterViewsCollapsed = !filterViewsCollapsed; saveFilterViewsPref(); renderFilterViews();
-  });
-  $("fvEdit").addEventListener("click", toggleFilters);
+    <div class="fmenu-list">${rows || '<div class="fvempty">No filters yet — use Edit filters to add one.</div>'}</div>
+    <div class="fmenu-foot"><button id="fvEdit"><span>⚙</span> Edit filters…</button></div>`;
   $("fvClear").addEventListener("click", () => {
     activeFilters.clear(); updateFilterBadge(); renderAll(); updateFilterViewsState();
   });
+  $("fvEdit").addEventListener("click", () => { closeHeaderMenus(); toggleFilters(); });
   root.querySelectorAll(".fvcheck").forEach(cb =>
     cb.addEventListener("change", () => toggleFilterActive(cb.dataset.fid, cb.checked)));
 }
 /* refresh header count / clear state without rebuilding rows (keeps checkbox focus) */
 function updateFilterViewsState(){
-  const root = $("filterViews"); if(!root) return;
+  const root = $("menuFilters"); if(!root) return;
   const count = root.querySelector(".fvcount");
   if(count) count.textContent = `${activeFilters.size}/${filters.length}`;
   const clear = root.querySelector("#fvClear");
   if(clear) clear.disabled = !activeFilters.size;
   root.querySelectorAll(".fvcheck").forEach(cb => { cb.checked = activeFilters.has(cb.dataset.fid); });
 }
-function saveFilterViewsPref(){
-  try{ localStorage.setItem(FILTER_VIEWS_KEY, filterViewsCollapsed ? "1" : "0"); }catch(_){}
+/* header button: toggle the filters dropdown */
+function toggleFilterMenu(){
+  if(present) return;
+  const menu = $("menuFilters");
+  const wasOpen = menu.classList.contains("open");
+  closeHeaderMenus();
+  if(wasOpen) return;
+  if(filtersOpen) toggleFilters();
+  renderFilterViews();
+  menu.classList.add("open");
+  $("btnFilters").classList.add("active");
 }
-/* editor modal: create / rename / recolor / delete (enabling lives in the floating checklist) */
+/* editor modal: create / rename / recolor / reorder / delete (enabling lives in the header dropdown) */
 function buildFiltersModal(){
-  const rows = filters.map(f => `<div class="frow" data-fid="${f.id}">
-      <span class="fdot" data-fcolor="${f.id}" style="background:${esc(f.color)}" title="Click to cycle color"></span>
+  closeFilterPalette();
+  const rows = filters.map(f => {
+    const on = activeFilters.has(f.id);
+    return `<div class="frow" data-fid="${f.id}">
+      <span class="fdrag" title="Drag to reorder">⠿</span>
+      <button class="fdot" data-fcolor="${f.id}" style="background:${esc(f.color)}" title="Change color"></button>
       <input type="text" class="fname" data-fid="${f.id}" value="${esc(f.name)}" maxlength="40">
+      <label class="ftoggle" title="${on ? "Enabled" : "Disabled"}"><input type="checkbox" class="fcheck" data-fid="${f.id}" ${on ? "checked" : ""}></label>
       <button class="fdanger" data-fdel="${f.id}" title="Delete filter">✕</button>
-    </div>`).join("");
+    </div>`;
+  }).join("");
   $("filters").innerHTML = `<div class="jm-box">
-    <div class="jm-head"><h3>Edit filters</h3><button id="fClose" title="Close">✕</button></div>
+    <div class="jm-head"><h3>Filters</h3><button id="fClose" title="Close">✕</button></div>
     <div class="jm-body">
-      <p class="jm-hint">Create named filters, then tag any object from its properties panel. Turn filter views on or off from the floating <b>Filter views</b> checklist at the top-left of the canvas. Objects without an active filter are dimmed; a matching object also keeps its containing zones/swimlanes lit.</p>
-      <div class="fnew">
+      <p class="fhint">Create named filters, tag objects from their properties panel, then enable filters from the <b>Filters</b> menu in the header.</p>
+      <div class="fcomposer">
+        <button class="fnewdot" id="fNewDot" title="Pick color"></button>
         <input type="text" id="fName" placeholder="New filter name…" maxlength="40">
-        <div class="fcolors">${FILTER_COLORS.map(c => `<div class="sw" data-newcolor="${c}" style="background:${c}"></div>`).join("")}</div>
-        <button id="fAdd">+ Add</button>
+        <button id="fAdd" disabled>+ Add</button>
       </div>
       <div class="flist">${rows || '<p class="jempty">No filters yet. Add one above.</p>'}</div>
     </div>
@@ -10111,25 +10133,35 @@ function buildFiltersModal(){
     </div>
   </div>`;
   let newColor = FILTER_COLORS[0];
-  const colorEls = $("filters").querySelectorAll("[data-newcolor]");
-  const syncNewColor = () => colorEls.forEach(c => c.classList.toggle("on", c.dataset.newcolor === newColor));
-  syncNewColor();
-  colorEls.forEach(c => c.addEventListener("click", () => { newColor = c.dataset.newcolor; syncNewColor(); }));
+  const newDot = $("fNewDot");
+  const paintNew = () => { newDot.style.background = newColor; };
+  paintNew();
+  const nameInput = $("fName"), addBtn = $("fAdd");
+  const syncAdd = () => { addBtn.disabled = !nameInput.value.trim(); };
+  nameInput.addEventListener("input", syncAdd);
   const add = () => {
-    const inp = $("fName"), name = inp.value.trim();
-    if(!name){ inp.focus(); return; }
+    const name = nameInput.value.trim();
+    if(!name){ nameInput.focus(); return; }
     addFilter(name, newColor);
   };
-  $("fAdd").onclick = add;
-  $("fName").addEventListener("keydown", e => { e.stopPropagation(); if(e.key === "Enter") add(); });
+  addBtn.onclick = add;
+  nameInput.addEventListener("keydown", e => { e.stopPropagation(); if(e.key === "Enter") add(); });
+  newDot.addEventListener("click", e => { e.stopPropagation(); openFilterPalette(newDot, newColor, c => { newColor = c; paintNew(); }); });
   $("fClose").onclick = toggleFilters;
   $("fDone").onclick = toggleFilters;
   $("filters").querySelectorAll(".fname").forEach(inp => {
     inp.addEventListener("change", () => renameFilter(inp.dataset.fid, inp.value));
     inp.addEventListener("keydown", e => { e.stopPropagation(); if(e.key === "Enter") e.target.blur(); });
   });
-  $("filters").querySelectorAll(".fdot").forEach(dot => dot.addEventListener("click", () => cycleFilterColor(dot.dataset.fcolor)));
+  $("filters").querySelectorAll(".fdot").forEach(dot => dot.addEventListener("click", e => {
+    e.stopPropagation();
+    const id = dot.dataset.fcolor, f = filterById(id); if(!f) return;
+    openFilterPalette(dot, f.color, c => setFilterColor(id, c));
+  }));
+  $("filters").querySelectorAll(".fcheck").forEach(cb =>
+    cb.addEventListener("change", () => toggleFilterActive(cb.dataset.fid, cb.checked)));
   $("filters").querySelectorAll(".fdanger").forEach(b => b.addEventListener("click", () => deleteFilter(b.dataset.fdel)));
+  initFilterDrag();
 }
 function addFilter(name, color){
   filters.push({id:uid("fl"), name:String(name).trim().slice(0, 40), color:color || FILTER_COLORS[0]});
@@ -10141,15 +10173,91 @@ function renameFilter(id, name){
   if(!n || n === f.name){ buildFiltersModal(); return; }
   f.name = n; saveSoon(); renderFilterViews(); renderAll(); buildFiltersModal();
 }
-function cycleFilterColor(id){
-  const f = filterById(id); if(!f) return;
-  const i = Math.max(0, FILTER_COLORS.indexOf(f.color));
-  f.color = FILTER_COLORS[(i + 1) % FILTER_COLORS.length];
-  saveSoon(); renderFilterViews(); renderAll(); buildFiltersModal();
+function setFilterColor(id, color){
+  const f = filterById(id); if(!f || f.color === color) return;
+  f.color = color; saveSoon(); renderFilterViews(); renderAll(); buildFiltersModal();
+}
+/* floating color palette shared by the composer swatch and each row dot */
+let filterPaletteEl = null;
+function ensureFilterPalette(){
+  if(filterPaletteEl && document.body.contains(filterPaletteEl)) return filterPaletteEl;
+  const el = document.createElement("div");
+  el.className = "fpalette";
+  el.innerHTML = FILTER_COLORS.map(c => `<span class="sw" data-color="${c}" style="background:${c}"></span>`).join("");
+  document.body.appendChild(el);
+  filterPaletteEl = el;
+  return el;
+}
+function closeFilterPalette(){ if(filterPaletteEl) filterPaletteEl.classList.remove("open"); }
+function openFilterPalette(anchor, current, onPick){
+  const el = ensureFilterPalette();
+  el.querySelectorAll(".sw").forEach(s => s.classList.toggle("on", s.dataset.color === current));
+  el.classList.add("open");
+  const r = anchor.getBoundingClientRect(), pr = el.getBoundingClientRect();
+  let left = r.left, top = r.bottom + 6;
+  if(left + pr.width > window.innerWidth - 8) left = window.innerWidth - pr.width - 8;
+  if(top + pr.height > window.innerHeight - 8) top = r.top - pr.height - 6;
+  el.style.left = Math.max(8, left) + "px";
+  el.style.top = Math.max(8, top) + "px";
+  const pick = e => {
+    const s = e.target.closest(".sw"); if(!s) return;
+    onPick(s.dataset.color); close();
+  };
+  const outside = e => { if(!el.contains(e.target) && e.target !== anchor) close(); };
+  const close = () => {
+    el.classList.remove("open");
+    el.removeEventListener("click", pick);
+    document.removeEventListener("mousedown", outside, true);
+  };
+  el.addEventListener("click", pick);
+  setTimeout(() => document.addEventListener("mousedown", outside, true), 0);
+}
+/* pointer-based drag to reorder filters (handle-driven, live preview) */
+function initFilterDrag(){
+  const list = $("filters") && $("filters").querySelector(".flist");
+  if(!list) return;
+  list.querySelectorAll(".fdrag").forEach(handle => {
+    handle.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      const row = handle.closest(".frow"); if(!row) return;
+      row.classList.add("dragging");
+      try{ handle.setPointerCapture(e.pointerId); }catch(_){}
+      const move = ev => {
+        const under = document.elementFromPoint(ev.clientX, ev.clientY);
+        const over = under && under.closest(".frow");
+        if(!over || over === row || !list.contains(over)) return;
+        const rect = over.getBoundingClientRect();
+        const after = ev.clientY > rect.top + rect.height / 2;
+        const ref = after ? over.nextSibling : over;
+        if(ref === row || ref === row.nextSibling) return;
+        list.insertBefore(row, ref);
+      };
+      const up = () => {
+        handle.removeEventListener("pointermove", move);
+        handle.removeEventListener("pointerup", up);
+        handle.removeEventListener("pointercancel", up);
+        row.classList.remove("dragging");
+        const order = [...list.querySelectorAll(".frow")].map(r => r.dataset.fid);
+        const changed = order.some((id, i) => !filters[i] || filters[i].id !== id);
+        if(!changed) return;
+        const byId = new Map(filters.map(f => [f.id, f]));
+        filters = order.map(id => byId.get(id)).filter(Boolean);
+        saveSoon(); renderFilterViews(); renderAll(); buildFiltersModal();
+      };
+      handle.addEventListener("pointermove", move);
+      handle.addEventListener("pointerup", up);
+      handle.addEventListener("pointercancel", up);
+    });
+  });
 }
 function toggleFilterActive(id, on){
   if(on) activeFilters.add(id); else activeFilters.delete(id);
   updateFilterBadge(); renderAll(); updateFilterViewsState();
+  if(filtersOpen) syncFilterEditorToggles();
+}
+function syncFilterEditorToggles(){
+  const root = $("filters"); if(!root) return;
+  root.querySelectorAll(".fcheck").forEach(cb => { cb.checked = activeFilters.has(cb.dataset.fid); });
 }
 function deleteFilter(id){
   const f = filterById(id); if(!f) return;
@@ -12415,7 +12523,7 @@ $("btnPNG").onclick = () => requestExport(() => exportPNG());
 $("btnSVG").onclick = () => requestExport(() => exportSVG());
 $("btnGIF").onclick = () => requestExport(() => exportGIF());
 $("btnJourney").onclick = toggleJourney;
-$("btnFilters").onclick = toggleFilters;
+$("btnFilters").onclick = e => { e.stopPropagation(); toggleFilterMenu(); };
 $("btnSearch").onclick = openSearch;
 $("pickUse").onclick = () => endPick(true);
 $("pickCancel").onclick = () => endPick(false);
@@ -12447,7 +12555,10 @@ $("pageDelete").onclick = deleteCurrentPage;
 $("btnClear").onclick = resetDocument;
 
 /* ---------- header dropdown menus ---------- */
-function closeHeaderMenus(){ document.querySelectorAll(".hmenu.open").forEach(m => m.classList.remove("open")); }
+function closeHeaderMenus(){
+  document.querySelectorAll(".hmenu.open").forEach(m => m.classList.remove("open"));
+  const bf = $("btnFilters"); if(bf) bf.classList.remove("active");
+}
 [["btnExport","menuExport"], ["btnFile","menuFile"], ["btnMore","menuMore"]].forEach(([btnId, menuId]) => {
   const btn = $(btnId), menu = $(menuId);
   btn.onclick = e => {
@@ -12458,7 +12569,7 @@ function closeHeaderMenus(){ document.querySelectorAll(".hmenu.open").forEach(m 
   };
 });
 document.addEventListener("click", e => { if(!e.target.closest(".tgroup.menu")) closeHeaderMenus(); });
-document.querySelectorAll(".hmenu button").forEach(b => b.addEventListener("click", closeHeaderMenus));
+document.querySelectorAll(".hmenu:not(#menuFilters) button").forEach(b => b.addEventListener("click", closeHeaderMenus));
 
 /* ---------- sample diagram ---------- */
 function sampleState(){
